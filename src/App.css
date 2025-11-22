@@ -131,9 +131,10 @@
 
 /* Issuer Form Container */
 .issuer-form-container {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 3rem 2rem;
+  width: 100%;
 }
 
 .form-wrapper {
@@ -173,10 +174,11 @@
 
 .form-label {
   display: block;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
+  letter-spacing: 0.3px;
 }
 
 /* File Input Styling */
@@ -286,62 +288,315 @@
 /* Success Box */
 .success-box {
   margin-top: 2rem;
-  padding: 2rem;
+  padding: 2.5rem;
   background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  border-radius: 12px;
+  border-radius: 16px;
   border: 2px solid #28a745;
   text-align: center;
   position: relative;
   z-index: 1;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
 }
 
 .success-icon {
-  font-size: 3rem;
+  font-size: 3.5rem;
   margin-bottom: 1rem;
 }
 
 .success-box h3 {
   color: #155724;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   margin: 0 0 1.5rem 0;
   font-weight: 700;
 }
 
 .hash-display {
   background-color: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-top: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .hash-label {
   font-weight: 700;
   color: #155724;
-  margin-bottom: 0.75rem;
-  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-size: 1.15rem;
 }
 
 .hash-value {
   display: block;
-  padding: 1.2rem;
-  background-color: #f1f3f5;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
   border: 2px solid #28a745;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #212529;
-  font-family: 'Courier New', monospace;
-  font-size: 0.95rem;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9rem;
   font-weight: 600;
   word-break: break-all;
   margin: 0.75rem 0;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .hash-note {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #495057;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   margin-bottom: 0;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Wallet Connect Section */
+.wallet-connect-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+/* RainbowKit Button Customization */
+.wallet-connect-section button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.wallet-connect-section button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Address Input */
+.address-input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  transition: border-color 0.3s ease;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.address-input.valid {
+  border-color: #28a745;
+}
+
+.address-input.invalid {
+  border-color: #dc3545;
+}
+
+/* Validation Text */
+.error-text {
+  color: #dc3545;
+  font-size: 0.95rem;
+  margin-top: 0.65rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-text::before {
+  content: '❌';
+  font-size: 0.9rem;
+}
+
+.success-text {
+  color: #28a745;
+  font-size: 0.95rem;
+  margin-top: 0.65rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.warning-text {
+  color: #856404;
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 1.25rem;
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-radius: 10px;
+  border: 2px solid #ffc107;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+/* Mint Section */
+.mint-section {
+  margin-top: 2.5rem;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 16px;
+  border: 2px solid #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+}
+
+.mint-section-title {
+  color: #667eea;
+  font-size: 2rem;
+  margin: 0 0 2rem 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Mint Button */
+.mint-button {
+  width: 100%;
+  padding: 1.2rem 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.mint-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.mint-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.mint-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+/* Error Box */
+.error-box {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border: 2px solid #dc3545;
+  border-radius: 12px;
+  color: #721c24;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+}
+
+.error-box p {
+  margin: 0.75rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.error-box strong {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Transaction Box */
+.transaction-box {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 2px solid #2196f3;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+}
+
+.tx-label {
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.tx-hash {
+  display: block;
+  padding: 1.25rem;
+  background-color: white;
+  border: 2px solid #2196f3;
+  border-radius: 8px;
+  color: #212529;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  word-break: break-all;
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+
+.explorer-link {
+  display: inline-block;
+  color: white;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.explorer-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+/* Confirmed Box */
+.confirmed-box {
+  margin-top: 2rem;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 2px solid #28a745;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.confirmed-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.confirmed-box h4 {
+  color: #155724;
+  font-size: 1.75rem;
+  margin: 0 0 1.25rem 0;
+  font-weight: 700;
+}
+
+.confirmed-box p {
+  color: #155724;
+  font-size: 1.1rem;
+  margin: 0;
+  line-height: 1.7;
   font-weight: 500;
 }
 
@@ -374,5 +629,17 @@
   
   .form-content {
     padding: 1.5rem 1rem;
+  }
+  
+  .mint-section {
+    padding: 1.5rem 1rem;
+  }
+  
+  .mint-section-title {
+    font-size: 1.5rem;
+  }
+  
+  .wallet-connect-section {
+    padding: 1rem;
   }
 }

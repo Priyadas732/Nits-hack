@@ -1,11 +1,31 @@
 import { useState } from 'react';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { isAddress } from 'viem';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { uploadFileToIPFS, uploadJSONToIPFS } from '../utils/pinata';
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../config/contract';
 
 export default function IssuerForm() {
     const [file, setFile] = useState(null);
     const [certType, setCertType] = useState("Degree"); // Default option
     const [status, setStatus] = useState("");
     const [finalHash, setFinalHash] = useState("");
+    const [studentAddress, setStudentAddress] = useState("");
+    const [isAddressValid, setIsAddressValid] = useState(false);
+    
+    // Wagmi hooks
+    const { address: connectedAddress, isConnected } = useAccount();
+    const { data: hash, writeContract, isPending: isMintPending, error: mintError } = useWriteContract();
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+        hash,
+    });
+
+    // Validate student address
+    const handleAddressChange = (e) => {
+        const address = e.target.value;
+        setStudentAddress(address);
+        setIsAddressValid(isAddress(address));
+    };
 
     const handleUpload = async () => {
         if (!file) return alert("Please select a file");
@@ -45,12 +65,46 @@ export default function IssuerForm() {
         }
     };
 
+    // Handle minting to blockchain
+    const handleMint = async () => {
+        if (!isConnected) {
+            alert("Please connect your wallet first!");
+            return;
+        }
+
+        if (!isAddressValid) {
+            alert("Please enter a valid student wallet address!");
+            return;
+        }
+
+        if (!finalHash) {
+            alert("Please upload the credential to IPFS first!");
+            return;
+        }
+
+        try {
+            writeContract({
+                address: CONTRACT_ADDRESS,
+                abi: CONTRACT_ABI,
+                functionName: 'issueCredential',
+                args: [studentAddress, finalHash],
+            });
+        } catch (error) {
+            console.error("Minting error:", error);
+        }
+    };
+
     return (
         <div className="issuer-form-container">
             <div className="form-wrapper">
                 <div className="form-header">
                     <h1 className="form-title">Issue New Credential</h1>
                     <p className="form-subtitle">Upload and mint student credentials as blockchain NFTs</p>
+                </div>
+                
+                {/* Wallet Connection */}
+                <div className="wallet-connect-section">
+                    <ConnectButton />
                 </div>
                 
                 <div className="form-content">
@@ -115,6 +169,82 @@ export default function IssuerForm() {
                                 <code className="hash-value">{finalHash}</code>
                                 <p className="hash-note">💡 Save this hash! This is what will be stored on the blockchain.</p>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Blockchain Minting Section */}
+                    {finalHash && (
+                        <div className="mint-section">
+                            <h3 className="mint-section-title">Mint to Blockchain</h3>
+                            
+                            {/* Student Address Input */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    👤 Student Wallet Address
+                                </label>
+                                <input
+                                    type="text"
+                                    value={studentAddress}
+                                    onChange={handleAddressChange}
+                                    placeholder="0x..."
+                                    className={`address-input ${studentAddress && (isAddressValid ? 'valid' : 'invalid')}`}
+                                />
+                                {studentAddress && !isAddressValid && (
+                                    <p className="error-text">Invalid Ethereum address format</p>
+                                )}
+                                {studentAddress && isAddressValid && (
+                                    <p className="success-text">✓ Valid address</p>
+                                )}
+                            </div>
+
+                            {/* Mint Button */}
+                            <button
+                                onClick={handleMint}
+                                disabled={!isConnected || !isAddressValid || isMintPending || isConfirming}
+                                className="mint-button"
+                            >
+                                {isMintPending ? '⏳ Waiting for Approval...' : 
+                                 isConfirming ? '⏳ Confirming Transaction...' : 
+                                 '🔗 Mint Credential to Blockchain'}
+                            </button>
+
+                            {/* Connection Warning */}
+                            {!isConnected && (
+                                <p className="warning-text">Please connect your wallet to mint credentials</p>
+                            )}
+
+                            {/* Mint Error */}
+                            {mintError && (
+                                <div className="error-box">
+                                    <p><strong>Transaction Error:</strong></p>
+                                    <p>{mintError.message || 'Failed to mint credential'}</p>
+                                </div>
+                            )}
+
+                            {/* Transaction Hash */}
+                            {hash && (
+                                <div className="transaction-box">
+                                    <p className="tx-label">Transaction Hash:</p>
+                                    <code className="tx-hash">{hash}</code>
+                                    <a
+                                        href={`https://amoy.polygonscan.com/tx/${hash}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="explorer-link"
+                                    >
+                                        View on PolygonScan →
+                                    </a>
+                                </div>
+                            )}
+
+                            {/* Success Confirmation */}
+                            {isConfirmed && (
+                                <div className="confirmed-box">
+                                    <div className="confirmed-icon">🎉</div>
+                                    <h4>Credential Minted Successfully!</h4>
+                                    <p>The credential has been permanently recorded on the Polygon Amoy blockchain.</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
