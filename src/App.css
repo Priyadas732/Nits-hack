@@ -629,17 +629,530 @@
   
   .form-content {
     padding: 1.5rem 1rem;
+}\r
+\r
+/* Header Section */\r
+.verify-header {\r
+  text-align: center;\r
+  color: white;\r
+  margin-bottom: 3rem;\r
+}\r
+\r
+.verify-title {\r
+  font-size: 3rem;\r
+  font-weight: bold;\r
+  margin: 0 0 1rem 0;\r
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);\r
+}\r
+\r
+.verify-subtitle {\r
+  font-size: 1.2rem;\r
+  margin: 0;\r
+  opacity: 0.95;\r
+  max-width: 600px;\r
+  margin: 0 auto;\r
+}\r
+\r
+/* Search Section */\r
+.search-section {\r
+  background-color: white;\r
+  border-radius: 16px;\r
+  padding: 2rem;\r
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);\r
+  margin-bottom: 2rem;\r
+}\r
+\r
+.search-form {\r
+  width: 100%;\r
+}\r
+\r
+.search-input-wrapper {\r
+  display: flex;\r
+  gap: 1rem;\r
+  flex-wrap: wrap;\r
+}\r
+\r
+.search-input {\r
+  flex: 1;\r
+  min-width: 250px;\r
+  padding: 1rem 1.5rem;\r
+  font-size: 1.1rem;\r
+  border: 2px solid #e0e0e0;\r
+  border-radius: 8px;\r
+  transition: border-color 0.3s ease;\r
+  font-family: inherit;\r
+}\r
+\r
+.search-input:focus {\r
+  outline: none;\r
+  border-color: #667eea;\r
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);\r
+}\r
+\r
+.search-button {\r
+  padding: 1rem 2.5rem;\r
+  font-size: 1.1rem;\r
+  font-weight: bold;\r
+  color: white;\r
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\r
+  border: none;\r
+  border-radius: 8px;\r
+  cursor: pointer;\r
+  transition: transform 0.3s ease, box-shadow 0.3s ease;\r
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);\r
+  display: flex;\r
+  align-items: center;\r
+  gap: 0.5rem;\r
+  white-space: nowrap;\r
+}\r
+\r
+.search-button:hover:not(:disabled) {\r
+  transform: translateY(-2px);\r
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);\r
+}\r
+\r
+.search-button:disabled {\r
+  opacity: 0.6;\r
+  cursor: not-allowed;\r
+}\r
+\r
+.spinner {\r
+  width: 16px;\r
+  height: 16px;\r
+  border: 2px solid rgba(255, 255, 255, 0.3);\r
+  border-top-color: white;\r
+  border-radius: 50%;\r
+  animation: spin 0.6s linear infinite;\r
+}\r
+\r
+@keyframes spin {\r
+  to { transform: rotate(360deg); }\r
+}\r
+\r
+/* Credential Card */\r
+.credential-card {\r
+  background: white;\r
+  border-radius: 16px;\r
+  padding: 2.5rem;\r
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);\r
+  position: relative;\r
+  margin-bottom: 2rem;\r
+  border: 3px solid transparent;\r
+  transition: all 0.3s ease;\r
+}\r
+\r
+.credential-card.valid {\r
+  border-color: #4caf50;\r
+  background: linear-gradient(to bottom, rgba(76, 175, 80, 0.05), white);\r
+}\r
+\r
+.credential-card.revoked {\r
+  border-color: #f44336;\r
+  background: linear-gradient(to bottom, rgba(244, 67, 54, 0.05), white);\r
+}\r
+\r
+/* Status Badge */\r
+.status-badge {\r
+  position: absolute;\r
+  top: 1.5rem;\r
+  right: 1.5rem;\r
+  padding: 0.75rem 1.5rem;\r
+  border-radius: 25px;\r
+  font-weight: bold;\r
+  font-size: 0.9rem;\r
+  letter-spacing: 0.5px;\r
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);\r
+}\r
+\r
+.status-badge.valid {\r
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);\r
+  color: white;\r
+}\r
+\r
+.status-badge.revoked {\r
+  background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);\r
+  color: white;\r
+}\r
+\r
+/* Credential Header */\r
+.credential-header {\r
+  display: flex;\r
+  align-items: center;\r
+  gap: 1.5rem;\r
+  margin-bottom: 2rem;\r
+  padding-bottom: 2rem;\r
+  border-bottom: 2px solid #f0f0f0;\r
+}\r
+\r
+.credential-icon {\r
+  font-size: 4rem;\r
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\r
+  width: 80px;\r
+  height: 80px;\r
+  border-radius: 16px;\r
+  display: flex;\r
+  align-items: center;\r
+  justify-content: center;\r
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);\r
+}\r
+\r
+.credential-title-section {\r
+  flex: 1;\r
+}\r
+\r
+.credential-main-title {\r
+  font-size: 2rem;\r
+  margin: 0 0 0.5rem 0;\r
+  color: #667eea;\r
+  font-weight: 700;\r
+}\r
+\r
+.credential-id-display {\r
+  font-size: 1rem;\r
+  color: #666;\r
+  margin: 0;\r
+  font-family: 'Courier New', monospace;\r
+}\r
+\r
+/* Details Grid */\r
+.credential-details-grid {\r
+  display: grid;\r
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\r
+  gap: 1.5rem;\r
+  margin-bottom: 2rem;\r
+}\r
+\r
+.detail-item {\r
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));\r
+  padding: 1.5rem;\r
+  border-radius: 12px;\r
+  border: 1px solid rgba(102, 126, 234, 0.1);\r
+  transition: transform 0.2s ease;\r
+}\r
+\r
+.detail-item:hover {\r
+  transform: translateY(-2px);\r
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);\r
+}\r
+\r
+.detail-item.full-width {\r
+  grid-column: 1 / -1;\r
+}\r
+\r
+.detail-label {\r
+  font-size: 0.9rem;\r
+  color: #667eea;\r
+  font-weight: 600;\r
+  margin-bottom: 0.75rem;\r
+  text-transform: uppercase;\r
+  letter-spacing: 0.5px;\r
+}\r
+\r
+.detail-value {\r
+  font-size: 1.1rem;\r
+  color: #333;\r
+  font-weight: 500;\r
+  word-break: break-word;\r
+}\r
+\r
+.address-value {\r
+  display: flex;\r
+  align-items: center;\r
+  gap: 0.75rem;\r
+  font-family: 'Courier New', monospace;\r
+  font-size: 0.95rem;\r
+}\r
+\r
+.address-full {\r
+  display: none;\r
+}\r
+\r
+.address-short {\r
+  display: inline;\r
+}\r
+\r
+.copy-btn {\r
+  background: rgba(102, 126, 234, 0.1);\r
+  border: none;\r
+  padding: 0.5rem 0.75rem;\r
+  border-radius: 6px;\r
+  cursor: pointer;\r
+  font-size: 1rem;\r
+  transition: all 0.2s ease;\r
+}\r
+\r
+.copy-btn:hover {\r
+  background: rgba(102, 126, 234, 0.2);\r
+  transform: scale(1.1);\r
+}\r
+\r
+.copy-btn:active {\r
+  transform: scale(0.95);\r
+}\r
+\r
+/* Action Buttons */\r
+.action-buttons {\r
+  display: flex;\r
+  gap: 1rem;\r
+  margin-bottom: 2rem;\r
+  flex-wrap: wrap;\r
+}\r
+\r
+.action-btn {\r
+  flex: 1;\r
+  min-width: 200px;\r
+  padding: 1rem 1.5rem;\r
+  border-radius: 8px;\r
+  text-decoration: none;\r
+  font-weight: 600;\r
+  text-align: center;\r
+  transition: all 0.3s ease;\r
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);\r
+  display: flex;\r
+  align-items: center;\r
+  justify-content: center;\r
+  gap: 0.5rem;\r
+}\r
+\r
+.action-btn.primary {\r
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\r
+  color: white;\r
+}\r
+\r
+.action-btn.primary:hover {\r
+  transform: translateY(-2px);\r
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);\r
+}\r
+\r
+.action-btn.secondary {\r
+  background: white;\r
+  color: #667eea;\r
+  border: 2px solid #667eea;\r
+}\r
+\r
+.action-btn.secondary:hover {\r
+  background: rgba(102, 126, 234, 0.05);\r
+  transform: translateY(-2px);\r
+}\r
+\r
+/* Metadata Section */\r
+.metadata-section {\r
+  margin-top: 2rem;\r
+  padding-top: 2rem;\r
+  border-top: 2px solid #f0f0f0;\r
+}\r
+\r
+.metadata-details summary {\r
+  cursor: pointer;\r
+  font-weight: 600;\r
+  color: #667eea;\r
+  padding: 1rem;\r
+  background: rgba(102, 126, 234, 0.05);\r
+  border-radius: 8px;\r
+  transition: background 0.2s ease;\r
+}\r
+\r
+.metadata-details summary:hover {\r
+  background: rgba(102, 126, 234, 0.1);\r
+}\r
+\r
+.metadata-json {\r
+  background: #1e1e1e;\r
+  color: #d4d4d4;\r
+  padding: 1.5rem;\r
+  border-radius: 8px;\r
+  overflow-x: auto;\r
+  margin-top: 1rem;\r
+  font-size: 0.9rem;\r
+  line-height: 1.6;\r
+}\r
+\r
+/* Error Card */\r
+.error-card {\r
+  background: white;\r
+  border-radius: 16px;\r
+  padding: 3rem 2rem;\r
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);\r
+  text-align: center;\r
+  border: 3px solid #f44336;\r
+}\r
+\r
+.error-icon {\r
+  font-size: 4rem;\r
+  margin-bottom: 1rem;\r
+}\r
+\r
+.error-card h3 {\r
+  color: #f44336;\r
+  font-size: 1.8rem;\r
+  margin: 0 0 1rem 0;\r
+}\r
+\r
+.error-card p {\r
+  color: #666;\r
+  font-size: 1.1rem;\r
+  margin: 0 0 1.5rem 0;\r
+}\r
+\r
+.error-suggestions {\r
+  background: rgba(244, 67, 54, 0.05);\r
+  padding: 1.5rem;\r
+  border-radius: 12px;\r
+  text-align: left;\r
+  margin-top: 1.5rem;\r
+}\r
+\r
+.error-suggestions strong {\r
+  color: #f44336;\r
+  display: block;\r
+  margin-bottom: 0.75rem;\r
+}\r
+\r
+.error-suggestions ul {\r
+  margin: 0;\r
+  padding-left: 1.5rem;\r
+}\r
+\r
+.error-suggestions li {\r
+  color: #666;\r
+  margin: 0.5rem 0;\r
+}\r
+\r
+/* Loading Card */\r
+.loading-card {\r
+  background: white;\r
+  border-radius: 16px;\r
+  padding: 3rem 2rem;\r
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);\r
+  text-align: center;\r
+}\r
+\r
+.loading-spinner {\r
+  width: 60px;\r
+  height: 60px;\r
+  border: 4px solid rgba(102, 126, 234, 0.1);\r
+  border-top-color: #667eea;\r
+  border-radius: 50%;\r
+  margin: 0 auto 1.5rem;\r
+  animation: spin 0.8s linear infinite;\r
+}\r
+\r
+.loading-card p {\r
+  color: #667eea;\r
+  font-size: 1.1rem;\r
+  margin: 0;\r
+  font-weight: 500;\r
+}\r
+\r
+/* Empty State */\r
+.empty-state {\r
+  background: white;\r
+  border-radius: 16px;\r
+  padding: 4rem 2rem;\r
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);\r
+  text-align: center;\r
+}\r
+\r
+.empty-icon {\r
+  font-size: 5rem;\r
+  margin-bottom: 1.5rem;\r
+  opacity: 0.5;\r
+}\r
+\r
+.empty-state h3 {\r
+  color: #667eea;\r
+  font-size: 2rem;\r
+  margin: 0 0 1rem 0;\r
+}\r
+\r
+.empty-state p {\r
+  color: #666;\r
+  font-size: 1.1rem;\r
+  margin: 0 0 1.5rem 0;\r
+}\r
+\r
+.example-text {\r
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));\r
+  padding: 1rem 1.5rem;\r
+  border-radius: 12px;\r
+  display: inline-block;\r
+  margin-top: 1rem;\r
+}\r
+\r
+.example-text code {\r
+  background: rgba(102, 126, 234, 0.2);\r
+  padding: 0.25rem 0.75rem;\r
+  border-radius: 6px;\r
+  font-family: 'Courier New', monospace;\r
+  font-weight: 600;\r
+  color: #667eea;\r
+}\r
+\r
+/* Responsive Design for Verify Page */\r
+@media (max-width: 768px) {\r
+  .verify-title {\r
+    font-size: 2.2rem;\r
+  }\r
+  \r
+  .verify-subtitle {\r
+    font-size: 1rem;\r
+  }\r
+  \r
+  .search-input-wrapper {\r
+    flex-direction: column;\r
+  }\r
+  \r
+  .search-input,\r
+  .search-button {\r
+    width: 100%;\r
+  }\r
+  \r
+  .credential-header {\r
+    flex-direction: column;\r
+    text-align: center;\r
+  }\r
+  \r
+  .credential-main-title {\r
+    font-size: 1.5rem;\r
+  }\r
+  \r
+  .credential-details-grid {\r
+    grid-template-columns: 1fr;\r
+  }\r
+  \r
+  .action-buttons {\r
+    flex-direction: column;\r
+  }\r
+  \r
+  .action-btn {\r
+    width: 100%;\r
+  }\r
+  \r
+  .address-full {\r
+    display: none !important;\r
+  }\r
+  \r
+  .verify-container {\r
+    padding: 0 1rem;\r
+  }\r
+  \r
+  .credential-card,\r
+  .search-section {\r
+    padding: 1.5rem;\r
+  }\r
+  \r
+  .status-badge {\r
+    position: static;\r
+    display: inline-block;\r
+    margin-bottom: 1rem;\r
+  }\r
+}\r
+\r
+@media (min-width: 769px) {\r
+  .address-full {\r
+    display: inline;\r
+  }\r
+  \r
+  .address-short {\r
+    display: none;\r
   }
-  
-  .mint-section {
-    padding: 1.5rem 1rem;
-  }
-  
-  .mint-section-title {
-    font-size: 1.5rem;
-  }
-  
-  .wallet-connect-section {
-    padding: 1rem;
-  }
-}
