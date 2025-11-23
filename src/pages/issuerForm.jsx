@@ -1,26 +1,73 @@
 import { useState } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { isAddress } from 'viem';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { uploadFileToIPFS, uploadJSONToIPFS } from '../utils/pinata';
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../config/contract';
+import { isAddress } from 'viem';
+import abi from '../utils/abi.json';
+
+const CONTRACT_ADDRESS = "0x710ea2b142bF87FD6330d0880F93d23C496d4E48";
+const CONTRACT_ABI = abi;
 
 export default function IssuerForm() {
+    const { isConnected } = useAccount();
+
+    // State for file and form data
     const [file, setFile] = useState(null);
-    const [certType, setCertType] = useState("Degree"); // Default option
+    const [certType, setCertType] = useState("Degree");
     const [status, setStatus] = useState("");
     const [finalHash, setFinalHash] = useState("");
+
+    // State for student address
     const [studentAddress, setStudentAddress] = useState("");
     const [isAddressValid, setIsAddressValid] = useState(false);
-    
-    // Wagmi hooks
-    const { address: connectedAddress, isConnected } = useAccount();
-    const { data: hash, writeContract, isPending: isMintPending, error: mintError } = useWriteContract();
+
+    // Wagmi hooks for minting
+    const { data: hash, error: mintError, isPending: isMintPending, writeContract } = useWriteContract();
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
         hash,
     });
 
-    // Validate student address
+    // IPFS Upload Functions
+    const uploadFileToIPFS = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+                'pinata_api_key': import.meta.env.VITE_PINATA_API_KEY,
+                'pinata_secret_api_key': import.meta.env.VITE_PINATA_SECRET_KEY,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to upload file to IPFS');
+        }
+
+        const data = await response.json();
+        return data.IpfsHash;
+    };
+
+    const uploadJSONToIPFS = async (jsonMetadata) => {
+        const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'pinata_api_key': import.meta.env.VITE_PINATA_API_KEY,
+                'pinata_secret_api_key': import.meta.env.VITE_PINATA_SECRET_KEY,
+            },
+            body: JSON.stringify(jsonMetadata),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to upload JSON to IPFS');
+        }
+
+        const data = await response.json();
+        return data.IpfsHash;
+    };
+
+    // Handle address validation
     const handleAddressChange = (e) => {
         const address = e.target.value;
         setStudentAddress(address);
@@ -29,7 +76,7 @@ export default function IssuerForm() {
 
     const handleUpload = async () => {
         if (!file) return alert("Please select a file");
-        
+
         // Clear previous results
         setFinalHash("");
         setStatus("Uploading PDF to IPFS...");
@@ -54,7 +101,7 @@ export default function IssuerForm() {
 
             // STEP 3: Upload the Metadata
             const metaHash = await uploadJSONToIPFS(metadata);
-            
+
             console.log("Final Metadata Hash:", metaHash);
             setFinalHash(metaHash);
             setStatus("");
@@ -101,12 +148,12 @@ export default function IssuerForm() {
                     <h1 className="form-title">Issue New Credential</h1>
                     <p className="form-subtitle">Upload and mint student credentials as blockchain NFTs</p>
                 </div>
-                
+
                 {/* Wallet Connection */}
                 <div className="wallet-connect-section">
                     <ConnectButton />
                 </div>
-                
+
                 <div className="form-content">
                     {/* File Input Section */}
                     <div className="form-group">
@@ -114,10 +161,10 @@ export default function IssuerForm() {
                             📄 Upload Credential Document (PDF)
                         </label>
                         <div className="file-input-wrapper">
-                            <input 
-                                type="file" 
+                            <input
+                                type="file"
                                 accept=".pdf"
-                                onChange={(e) => setFile(e.target.files[0])} 
+                                onChange={(e) => setFile(e.target.files[0])}
                                 className="file-input"
                                 id="file-upload"
                             />
@@ -132,7 +179,7 @@ export default function IssuerForm() {
                         <label className="form-label">
                             🎓 Credential Type
                         </label>
-                        <select 
+                        <select
                             onChange={(e) => setCertType(e.target.value)}
                             className="form-select"
                             value={certType}
@@ -144,7 +191,7 @@ export default function IssuerForm() {
                     </div>
 
                     {/* Action Button */}
-                    <button 
+                    <button
                         onClick={handleUpload}
                         className="submit-button"
                         disabled={!file}
@@ -176,7 +223,7 @@ export default function IssuerForm() {
                     {finalHash && (
                         <div className="mint-section">
                             <h3 className="mint-section-title">Mint to Blockchain</h3>
-                            
+
                             {/* Student Address Input */}
                             <div className="form-group">
                                 <label className="form-label">
@@ -203,9 +250,9 @@ export default function IssuerForm() {
                                 disabled={!isConnected || !isAddressValid || isMintPending || isConfirming}
                                 className="mint-button"
                             >
-                                {isMintPending ? '⏳ Waiting for Approval...' : 
-                                 isConfirming ? '⏳ Confirming Transaction...' : 
-                                 '🔗 Mint Credential to Blockchain'}
+                                {isMintPending ? '⏳ Waiting for Approval...' :
+                                    isConfirming ? '⏳ Confirming Transaction...' :
+                                        '🔗 Mint Credential to Blockchain'}
                             </button>
 
                             {/* Connection Warning */}
