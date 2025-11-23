@@ -1,15 +1,13 @@
 import { http, createConfig } from 'wagmi';
-import { polygonAmoy } from 'wagmi/chains';
+import { sepolia } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 
-// Polygon Amoy Testnet Configuration
 export const config = createConfig({
-  chains: [polygonAmoy],
+  chains: [sepolia],
   connectors: [
     injected(), // MetaMask, Brave, etc.
   ],
   transports: {
-    [polygonAmoy.id]: http(),
+    [sepolia.id]: http(),
   },
 });
-
