@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useReadContract } from "wagmi";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import abi from "../utils/abi.json";
 import { credentialAPI } from "../services/credentialAPI";
@@ -11,6 +11,7 @@ const CONTRACT_ADDRESS = "0x710ea2b142bF87FD6330d0880F93d23C496d4E48";
 const Verify = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [searchId, setSearchId] = useState(id || "");
   const [metadata, setMetadata] = useState(null);
@@ -19,6 +20,25 @@ const Verify = () => {
   const [actualCredentialId, setActualCredentialId] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const [searched, setSearched] = useState(false);
+  const [privacyRules, setPrivacyRules] = useState(null);
+
+  // Parse privacy rules from URL
+  useEffect(() => {
+    const rulesParam = searchParams.get('rules');
+    if (rulesParam) {
+      try {
+        // Decode Base64 and parse JSON
+        const decodedRules = JSON.parse(atob(rulesParam));
+        setPrivacyRules(decodedRules);
+        console.log('Privacy rules applied:', decodedRules);
+      } catch (error) {
+        console.error('Failed to parse privacy rules:', error);
+        setPrivacyRules(null);
+      }
+    } else {
+      setPrivacyRules(null);
+    }
+  }, [searchParams]);
 
   // Check if ID is a UUID and lookup actual credential ID
   useEffect(() => {
@@ -100,7 +120,7 @@ const Verify = () => {
       if (result.data) {
         if (
           result.data.student ===
-            "0x0000000000000000000000000000000000000000" ||
+          "0x0000000000000000000000000000000000000000" ||
           result.data.id === 0n
         ) {
           setFetchError(
@@ -185,6 +205,35 @@ const Verify = () => {
     return metadata.image.replace("ipfs://", "");
   };
 
+  // Filter metadata based on privacy rules
+  const getFilteredMetadata = () => {
+    if (!metadata) return null;
+
+    // If no privacy rules, return full metadata
+    if (!privacyRules || privacyRules.length === 0) {
+      return metadata;
+    }
+
+    // Create a filtered copy of metadata
+    // Remove attributes completely so they can't be inspected
+    const filtered = { ...metadata };
+
+    if (metadata.attributes && Array.isArray(metadata.attributes)) {
+      filtered.attributes = metadata.attributes.filter(attr => {
+        const fieldName = attr.trait_type || attr.key;
+        return privacyRules.includes(fieldName);
+      });
+    }
+
+    return filtered;
+  };
+
+  // Check if PDF should be accessible
+  const isPdfAccessible = () => {
+    // PDF is not accessible if privacy rules are applied
+    return !privacyRules || privacyRules.length === 0;
+  };
+
   return (
     <div className="verify-page">
       <div className="verify-container">
@@ -256,18 +305,16 @@ const Verify = () => {
         {/* Credential Card */}
         {credentialData &&
           credentialData.student !==
-            "0x0000000000000000000000000000000000000000" &&
+          "0x0000000000000000000000000000000000000000" &&
           !loading && (
             <div
-              className={`credential-card ${
-                credentialData.revoked ? "revoked" : "valid"
-              }`}
+              className={`credential-card ${credentialData.revoked ? "revoked" : "valid"
+                }`}
             >
               {/* Status Badge */}
               <div
-                className={`status-badge ${
-                  credentialData.revoked ? "revoked" : "valid"
-                }`}
+                className={`status-badge ${credentialData.revoked ? "revoked" : "valid"
+                  }`}
               >
                 {credentialData.revoked ? "⛔ REVOKED" : "✓ VALID"}
               </div>
@@ -279,7 +326,7 @@ const Verify = () => {
                   <h2 className="credential-main-title">
                     {metadata
                       ? metadata.certificateType?.replace("_", " ") ||
-                        "Credential"
+                      "Credential"
                       : "Loading..."}
                   </h2>
                   <p className="credential-id-display">
@@ -293,7 +340,7 @@ const Verify = () => {
                 {/* Certificate Type */}
                 {metadata && (
                   <div className="detail-item">
-                    <div className="detail-label">📜 Certificate Type</div>
+                    <div className="detail-label">Certificate Type</div>
                     <div className="detail-value">
                       {metadata.certificateType?.replace("_", " ") || "N/A"}
                     </div>
@@ -302,7 +349,7 @@ const Verify = () => {
 
                 {/* Issue Date */}
                 <div className="detail-item">
-                  <div className="detail-label">📅 Issue Date</div>
+                  <div className="detail-label">Issue Date</div>
                   <div className="detail-value">
                     {formatDate(credentialData.issueDate)}
                   </div>
@@ -310,7 +357,7 @@ const Verify = () => {
 
                 {/* Student Address */}
                 <div className="detail-item full-width">
-                  <div className="detail-label">👤 Student Address</div>
+                  <div className="detail-label">Student Address</div>
                   <div className="detail-value address-value">
                     <span className="address-full">
                       {credentialData.student}
@@ -330,7 +377,7 @@ const Verify = () => {
 
                 {/* Issuer Address */}
                 <div className="detail-item full-width">
-                  <div className="detail-label">🏛️ Issuer Address</div>
+                  <div className="detail-label">Issuer Address</div>
                   <div className="detail-value address-value">
                     <span className="address-full">
                       {credentialData.issuer}
@@ -349,17 +396,44 @@ const Verify = () => {
                 </div>
               </div>
 
+              {/* Attributes Section - Only if metadata exists and has attributes */}
+              {metadata && getFilteredMetadata()?.attributes && getFilteredMetadata().attributes.length > 0 && (
+                <div className="attributes-section">
+                  <h3 className="section-title">Credential Attributes</h3>
+                  <div className="attributes-grid">
+                    {getFilteredMetadata().attributes.map((attr, index) => (
+                      <div key={index} className="attribute-card">
+                        <div className="attribute-label">{attr.trait_type || attr.key}</div>
+                        <div className="attribute-value">{attr.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="action-buttons">
-                {metadata && getPdfHash() && (
+                {/* Only show PDF button if rules don't exist - don't even load PDF info */}
+                {!privacyRules && metadata && getPdfHash() && (
                   <a
                     href={`https://gateway.pinata.cloud/ipfs/${getPdfHash()}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="action-btn primary"
                   >
-                    📄 View Original Document
+                    View Original Document
                   </a>
+                )}
+
+                {/* Show restricted message if rules exist */}
+                {privacyRules && (
+                  <div className="action-btn disabled-info">
+                    <span className="lock-icon">🔒</span>
+                    <div>
+                      <strong>Document Access Restricted</strong>
+                      <p>Original PDF not available in privacy mode</p>
+                    </div>
+                  </div>
                 )}
 
                 <a
@@ -368,9 +442,20 @@ const Verify = () => {
                   rel="noopener noreferrer"
                   className="action-btn secondary"
                 >
-                  🔗 View on PolygonScan
+                  View on PolygonScan
                 </a>
               </div>
+
+              {/* Privacy Notice */}
+              {privacyRules && privacyRules.length > 0 && (
+                <div className="privacy-notice">
+                  <span className="privacy-icon">🔒</span>
+                  <div>
+                    <strong>Limited Visibility Mode</strong>
+                    <p>This credential has been shared with restricted access. Only selected attributes are visible.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Metadata Info */}
               {metadata && (
@@ -378,7 +463,7 @@ const Verify = () => {
                   <details className="metadata-details">
                     <summary>📊 View Complete Metadata</summary>
                     <pre className="metadata-json">
-                      {JSON.stringify(metadata, null, 2)}
+                      {JSON.stringify(getFilteredMetadata(), null, 2)}
                     </pre>
                   </details>
                 </div>

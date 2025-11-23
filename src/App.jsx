@@ -4,6 +4,8 @@ import IssuerForm from './pages/issuerForm.jsx'
 import Home from './pages/Home.jsx'
 import Verify from './pages/Verify.jsx'
 import CertificateTypes from './pages/CertificateTypes.jsx'
+import StudentDashboard from './pages/StudentDashboard.jsx'
+
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<StudentDashboard />} />
           <Route path="/issue" element={<IssuerForm />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/verify/:id" element={<Verify />} />
