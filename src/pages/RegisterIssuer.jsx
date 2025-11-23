@@ -44,16 +44,30 @@ export default function RegisterIssuer() {
     setStatus("Submitting application...");
 
     try {
-      writeContract({
+      await writeContract({
         address: CONTRACT_ADDRESS,
         abi: abi,
         functionName: "requestAuthorization",
-        args: [instituteName],
-        gas: 500000n, // Explicit gas limit to bypass estimation errors
+        args: [instituteName.trim()],
+        gas: 300000n, // Set reasonable gas limit below network cap
       });
     } catch (error) {
       console.error("Error submitting application:", error);
-      setStatus(`Error: ${error.message}`);
+
+      // Provide user-friendly error messages
+      let errorMessage = "";
+
+      if (error.message?.includes("User rejected")) {
+        errorMessage = "Transaction was rejected.";
+      } else if (error.message?.includes("insufficient funds")) {
+        errorMessage = "Insufficient funds for gas fees.";
+      } else if (error.message?.includes("Already registered")) {
+        errorMessage = "This address has already submitted an application.";
+      } else {
+        errorMessage = error.shortMessage || error.message || "Transaction failed";
+      }
+
+      setStatus(`Error: ${errorMessage}`);
     }
   };
 
@@ -264,9 +278,8 @@ export default function RegisterIssuer() {
                       padding: "1rem",
                       marginBottom: "1rem",
                       background: status.includes("Error") ? "#fee" : "#fef",
-                      border: `2px solid ${
-                        status.includes("Error") ? "#fcc" : "#fcf"
-                      }`,
+                      border: `2px solid ${status.includes("Error") ? "#fcc" : "#fcf"
+                        }`,
                       borderRadius: "8px",
                       color: status.includes("Error") ? "#c33" : "#933",
                       fontSize: "0.9rem",
@@ -338,8 +351,8 @@ export default function RegisterIssuer() {
                   {isSubmitting
                     ? "Submitting..."
                     : isConfirming
-                    ? "Confirming..."
-                    : "📝 Submit Application"}
+                      ? "Confirming..."
+                      : "📝 Submit Application"}
                 </button>
 
                 {/* Info Box */}

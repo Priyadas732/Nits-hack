@@ -88,6 +88,20 @@ const Verify = () => {
     },
   });
 
+  // Check if issuer is authorized
+  const {
+    data: isTrustedIssuer,
+    isLoading: isIssuerCheckLoading
+  } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: abi,
+    functionName: "isAuthorizedIssuer",
+    args: credentialData?.issuer ? [credentialData.issuer] : undefined,
+    query: {
+      enabled: !!credentialData?.issuer,
+    },
+  });
+
   // Auto-trigger verification when URL contains an ID
   useEffect(() => {
     if (id) {
@@ -356,7 +370,7 @@ const Verify = () => {
                   </div>
                 </div>
 
-                {/* Student Address */}
+                {/* Student Address
                 <div className="detail-item full-width">
                   <div className="detail-label">Student Address</div>
                   <div className="detail-value address-value">
@@ -374,25 +388,25 @@ const Verify = () => {
                       📋
                     </button>
                   </div>
-                </div>
+                </div> */}
 
-                {/* Issuer Address */}
+                {/* Issuer Status - Replaces Address */}
                 <div className="detail-item full-width">
-                  <div className="detail-label">Issuer Address</div>
-                  <div className="detail-value address-value">
-                    <span className="address-full">
-                      {credentialData.issuer}
-                    </span>
-                    <span className="address-short">
-                      {formatAddress(credentialData.issuer)}
-                    </span>
-                    <button
-                      className="copy-btn"
-                      onClick={() => copyToClipboard(credentialData.issuer)}
-                      title="Copy address"
-                    >
-                      📋
-                    </button>
+                  <div className="detail-label">Issuer Status</div>
+                  <div className="detail-value">
+                    {isIssuerCheckLoading ? (
+                      <span className="issuer-loading">
+                        <span className="spinner-small"></span> Verifying Issuer...
+                      </span>
+                    ) : isTrustedIssuer ? (
+                      <span className="issuer-trusted">
+                        ✅ Trusted Issuer (Registered in Registry)
+                      </span>
+                    ) : (
+                      <span className="issuer-unknown">
+                        ⚠️ Unknown Issuer (Not in Registry)
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -437,14 +451,14 @@ const Verify = () => {
                   </div>
                 )}
 
-                <a
+                {/* <a
                   href={`https://amoy.polygonscan.com/address/${CONTRACT_ADDRESS}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="action-btn secondary"
                 >
                   View on PolygonScan
-                </a>
+                </a> */}
               </div>
 
               {/* Privacy Notice */}

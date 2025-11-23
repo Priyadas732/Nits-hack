@@ -729,6 +729,7 @@ export default function IssuerForm() {
                           alignItems: "center",
                           gap: "0.5rem",
                           background: "white",
+                          color: "black",
                           padding: "0.75rem",
                           borderRadius: "6px",
                           marginTop: "0.5rem",
