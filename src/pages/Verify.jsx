@@ -308,46 +308,6 @@ const Verify = () => {
                     {formatDate(credentialData.issueDate)}
                   </div>
                 </div>
-
-                {/* Student Address */}
-                <div className="detail-item full-width">
-                  <div className="detail-label">👤 Student Address</div>
-                  <div className="detail-value address-value">
-                    <span className="address-full">
-                      {credentialData.student}
-                    </span>
-                    <span className="address-short">
-                      {formatAddress(credentialData.student)}
-                    </span>
-                    <button
-                      className="copy-btn"
-                      onClick={() => copyToClipboard(credentialData.student)}
-                      title="Copy address"
-                    >
-                      📋
-                    </button>
-                  </div>
-                </div>
-
-                {/* Issuer Address */}
-                <div className="detail-item full-width">
-                  <div className="detail-label">🏛️ Issuer Address</div>
-                  <div className="detail-value address-value">
-                    <span className="address-full">
-                      {credentialData.issuer}
-                    </span>
-                    <span className="address-short">
-                      {formatAddress(credentialData.issuer)}
-                    </span>
-                    <button
-                      className="copy-btn"
-                      onClick={() => copyToClipboard(credentialData.issuer)}
-                      title="Copy address"
-                    >
-                      📋
-                    </button>
-                  </div>
-                </div>
               </div>
 
               {/* Action Buttons */}
@@ -362,15 +322,6 @@ const Verify = () => {
                     📄 View Original Document
                   </a>
                 )}
-
-                <a
-                  href={`https://amoy.polygonscan.com/address/${CONTRACT_ADDRESS}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="action-btn secondary"
-                >
-                  🔗 View on PolygonScan
-                </a>
               </div>
 
               {/* Metadata Info */}
