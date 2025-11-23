@@ -447,6 +447,104 @@ export default function IssuerForm() {
                     >
                       <p
                         style={{
+                          fontWeight: "bold",
+                          color: "#667eea",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        🔗 Official Verification Link:
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          background: "white",
+                          padding: "0.75rem",
+                          borderRadius: "6px",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        <code
+                          style={{
+                            flex: 1,
+                            fontSize: "0.9rem",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {`${window.location.origin}/verify/${credentialUUID}`}
+                        </code>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `${window.location.origin}/verify/${credentialUUID}`
+                            );
+                            setShowUUIDCopied(true);
+                            setTimeout(() => setShowUUIDCopied(false), 2000);
+                          }}
+                          style={{
+                            padding: "0.5rem 1rem",
+                            background: "#667eea",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {showUUIDCopied ? "✓ Copied!" : "📋 Copy Link"}
+                        </button>
+                      </div>
+
+                      {/* Developer API Endpoint */}
+                      <div
+                        style={{
+                          marginTop: "1rem",
+                          borderTop: "1px dashed #ccc",
+                          paddingTop: "1rem",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontSize: "0.85rem",
+                            fontWeight: "bold",
+                            color: "#4a5568",
+                          }}
+                        >
+                          🛠️ API Endpoint (For Postman/Developers):
+                        </p>
+                        <code
+                          style={{
+                            display: "block",
+                            background: "#edf2f7",
+                            padding: "0.5rem",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            marginTop: "0.25rem",
+                            wordBreak: "break-all",
+                            color: "#2d3748",
+                          }}
+                        >
+                          {`http://localhost:5000/api/credentials/${credentialUUID}`}
+                        </code>
+                      </div>
+
+                      <p
+                        style={{
+                          fontSize: "0.85rem",
+                          color: "#666",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        💡 <strong>Industry Standard:</strong> Share this single
+                        link with employers or on LinkedIn. It provides instant,
+                        secure verification of the credential.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

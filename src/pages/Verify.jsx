@@ -68,24 +68,23 @@ const Verify = () => {
     },
   });
 
+  // Auto-trigger verification when URL contains an ID
   useEffect(() => {
     if (id) {
       setSearchId(id);
-      handleSearch(id);
     }
   }, [id]);
 
-  const handleSearch = async (credentialId) => {
-    if (!credentialId) return;
-
-    if (credentialId !== id) {
-      navigate(`/verify/${credentialId}`, { replace: true });
+  // Trigger blockchain fetch when actualCredentialId is ready
+  useEffect(() => {
+    if (actualCredentialId && searched) {
+      fetchFromBlockchain();
     }
+  }, [actualCredentialId, searched]);
 
+  const fetchFromBlockchain = async () => {
     setLoading(true);
     setMetadata(null);
-    setFetchError(null);
-    setSearched(true);
 
     try {
       const result = await refetch();
@@ -124,6 +123,20 @@ const Verify = () => {
       setFetchError("Invalid Credential ID - This credential does not exist");
       setLoading(false);
     }
+  };
+
+  const handleSearch = async (credentialId) => {
+    if (!credentialId) return;
+
+    if (credentialId !== id) {
+      navigate(`/verify/${credentialId}`, { replace: true });
+    }
+
+    setFetchError(null);
+    setSearched(true);
+
+    // The UUID lookup useEffect will handle setting actualCredentialId
+    // and then the fetchFromBlockchain useEffect will trigger
   };
 
   const fetchMetadata = async (ipfsHash) => {
@@ -189,12 +202,11 @@ const Verify = () => {
           <form onSubmit={handleSubmit} className="search-form">
             <div className="search-input-wrapper">
               <input
-                type="number"
-                placeholder="Enter Credential ID (e.g., 1, 2, 3...)"
+                type="text"
+                placeholder="Enter Credential ID or UUID..."
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
                 className="search-input"
-                min="1"
               />
               <button
                 type="submit"
