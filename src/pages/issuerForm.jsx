@@ -10,10 +10,11 @@ import abi from "../utils/abi.json";
 import { v4 as uuidv4 } from "uuid";
 import { credentialAPI } from "../services/credentialAPI";
 
-const CONTRACT_ADDRESS = "0x710ea2b142bF87FD6330d0880F93d23C496d4E48";
-const CONTRACT_ABI = abi;
 import { extractTextFromPDF } from "../utils/pdfToText";
 import { parseWithAI, hasValidData } from "../utils/aiParser";
+
+const CONTRACT_ADDRESS = "0xC8e4689704E74e62C59D7Fc20C74f7D0803157e9";
+const CONTRACT_ABI = abi;
 
 export default function IssuerForm() {
   // State for file and form data
@@ -145,6 +146,13 @@ export default function IssuerForm() {
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [aiError, setAiError] = useState("");
+
+  // Handle address input change
+  const handleAddressChange = (e) => {
+    const val = e.target.value;
+    setStudentAddress(val);
+    setIsAddressValid(isAddress(val));
+  };
 
   // Wagmi hooks
   const { address: connectedAddress, isConnected } = useAccount();
@@ -617,7 +625,6 @@ export default function IssuerForm() {
           {finalHash && (
             <div className="mint-section">
               <h3 className="mint-section-title">Mint to Blockchain</h3>
-
               {/* Student Address Input */}
               <div className="form-group">
                 <label className="form-label">👤 Student Wallet Address</label>
@@ -637,7 +644,6 @@ export default function IssuerForm() {
                   <p className="success-text">✓ Valid address</p>
                 )}
               </div>
-
               {/* Mint Button */}
               <button
                 onClick={handleMint}
@@ -655,14 +661,12 @@ export default function IssuerForm() {
                   ? "⏳ Confirming Transaction..."
                   : "🔗 Mint Credential to Blockchain"}
               </button>
-
               {/* Connection Warning */}
               {!isConnected && (
                 <p className="warning-text">
                   Please connect your wallet to mint credentials
                 </p>
               )}
-
               {/* Mint Error */}
               {mintError && (
                 <div className="error-box">
@@ -672,19 +676,18 @@ export default function IssuerForm() {
                   <p>{mintError.message || "Failed to mint credential"}</p>
                 </div>
               )}
-
               {/* Transaction Hash */}
               {hash && (
                 <div className="transaction-box">
                   <p className="tx-label">Transaction Hash:</p>
                   <code className="tx-hash">{hash}</code>
                   <a
-                    href={`https://amoy.polygonscan.com/tx/${hash}`}
+                    href={`https://sepolia.etherscan.io/tx/${hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="explorer-link"
                   >
-                    View on PolygonScan →
+                    View on Sepolia Etherscan →
                   </a>
                 </div>
               )}
@@ -695,8 +698,8 @@ export default function IssuerForm() {
                   <div className="confirmed-icon">🎉</div>
                   <h4>Credential Minted Successfully!</h4>
                   <p>
-                    The credential has been permanently recorded on the Polygon
-                    Amoy blockchain.
+                    The credential has been permanently recorded on the Ethereum
+                    Sepolia blockchain.
                   </p>
 
                   {/* UUID Share Link */}
