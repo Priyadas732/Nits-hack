@@ -1,0 +1,186 @@
+.issuer-dashboard-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-weight: 800;
+}
+
+.dashboard-header p {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.credential-group {
+    margin-bottom: 3rem;
+}
+
+.group-title {
+    font-size: 1.5rem;
+    color: #334155;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.count-badge {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+}
+
+.credential-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.credential-tile {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.credential-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+}
+
+.credential-tile.revoked {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.tile-content {
+    flex: 1;
+}
+
+.tile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.credential-id {
+    font-weight: 700;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.credential-date {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.tile-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.student-info {
+    font-size: 0.95rem;
+    color: #475569;
+}
+
+.student-info .label {
+    color: #94a3b8;
+    margin-right: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.student-info .value {
+    font-family: 'SF Mono', 'Monaco', monospace;
+    font-weight: 500;
+}
+
+.revoked-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: #ef4444;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.view-link {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-left: 1rem;
+}
+
+.view-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Loading & Empty States */
+.loading-state,
+.empty-state,
+.connect-wallet-message {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 640px) {
+    .credential-list {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+}

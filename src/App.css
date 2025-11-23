@@ -6,9 +6,10 @@
 
 /* Navigation Bar */
 .navbar {
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 1rem 0;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 0;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -21,32 +22,65 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 2rem;
 }
 
 .nav-title {
-  color: #667eea;
-  font-size: 1.5rem;
-  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.25rem;
+  font-weight: 700;
   margin: 0;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
 }
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
+  flex: 1;
 }
 
 .nav-link {
-  color: #333;
+  color: #475569;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
 }
 
 .nav-link:hover {
   color: #667eea;
-  background-color: rgba(102, 126, 234, 0.1);
+  background-color: rgba(102, 126, 234, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Wallet Widget */
+.wallet-widget {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Custom RainbowKit Button Styling */
+.wallet-widget button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+.wallet-widget button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35) !important;
 }
 
 /* Home Container */
@@ -180,7 +214,7 @@
 }
 
 .type-card:hover {
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .type-card-header {
@@ -529,7 +563,7 @@
   border-color: #764ba2;
 }
 
-.file-input:focus + .file-input-label {
+.file-input:focus+.file-input-label {
   outline: 2px solid #667eea;
   outline-offset: 2px;
 }
@@ -898,6 +932,7 @@
   from {
     transform: scale(0);
   }
+
   to {
     transform: scale(1);
   }
@@ -923,40 +958,40 @@
   .hero-title {
     font-size: 2.5rem;
   }
-  
+
   .hero-subtitle {
     font-size: 1.2rem;
   }
-  
+
   .nav-content {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .features {
     grid-template-columns: 1fr;
   }
-  
+
   .issuer-form-container {
     padding: 2rem 1rem;
   }
-  
+
   .form-title {
     font-size: 2rem;
   }
-  
+
   .form-content {
     padding: 1.5rem 1rem;
   }
-  
+
   .mint-section {
     padding: 1.5rem 1rem;
   }
-  
+
   .mint-section-title {
     font-size: 1.5rem;
   }
-  
+
   .wallet-connect-section {
     padding: 1rem;
   }
@@ -1003,16 +1038,19 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.85;
   }
 }
 
 /* Disable file input when AI is processing */
-.file-input:disabled + .file-input-label {
+.file-input:disabled+.file-input-label {
   opacity: 0.6;
   cursor: not-allowed;
   background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);

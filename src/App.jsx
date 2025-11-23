@@ -1,11 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import "./App.css";
 import IssuerForm from "./pages/issuerForm.jsx";
 import Home from "./pages/Home.jsx";
 import Verify from "./pages/Verify.jsx";
 import CertificateTypes from "./pages/CertificateTypes.jsx";
 import RegisterIssuer from "./pages/RegisterIssuer.jsx";
-import StudentDashboard from './pages/StudentDashboard.jsx'
+import StudentDashboard from './pages/StudentDashboard.jsx';
+import IssuerDashboard from './pages/IssuerDashboard.jsx';
 
 
 function App() {
@@ -25,12 +27,18 @@ function App() {
               <Link to="/issue" className="nav-link">
                 Issue Credential
               </Link>
+              <Link to="/issuer-dashboard" className="nav-link">
+                Issuer Dashboard
+              </Link>
               <Link to="/verify" className="nav-link">
                 Verify Credential
               </Link>
               <Link to="/types" className="nav-link">
                 Manage Types
               </Link>
+            </div>
+            <div className="wallet-widget">
+              <ConnectButton />
             </div>
           </div>
         </nav>
@@ -39,6 +47,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RegisterIssuer />} />
           <Route path="/dashboard" element={<StudentDashboard />} />
+          <Route path="/issuer-dashboard" element={<IssuerDashboard />} />
           <Route path="/issue" element={<IssuerForm />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/verify/:id" element={<Verify />} />
