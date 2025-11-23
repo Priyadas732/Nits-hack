@@ -6,7 +6,7 @@ import abi from "../utils/abi.json";
 import { credentialAPI } from "../services/credentialAPI";
 import "../Verify.css";
 
-const CONTRACT_ADDRESS = "0x710ea2b142bF87FD6330d0880F93d23C496d4E48";
+const CONTRACT_ADDRESS = "0xC8e4689704E74e62C59D7Fc20C74f7D0803157e9";
 
 const Verify = () => {
   const { id } = useParams();
