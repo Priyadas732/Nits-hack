@@ -72,6 +72,7 @@ const Verify = () => {
   useEffect(() => {
     if (id) {
       setSearchId(id);
+      setSearched(true); // Auto-trigger search for URL-based access
     }
   }, [id]);
 
