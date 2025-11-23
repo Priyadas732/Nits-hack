@@ -22,56 +22,73 @@ const Verify = () => {
   const [searched, setSearched] = useState(false);
   const [privacyRules, setPrivacyRules] = useState(null);
 
-  // Parse privacy rules from URL
+  // Parse ID and privacy rules from URL
   useEffect(() => {
-    const rulesParam = searchParams.get('rules');
-    if (rulesParam) {
-      try {
-        // Decode Base64 and parse JSON
-        const decodedRules = JSON.parse(atob(rulesParam));
-        setPrivacyRules(decodedRules);
-        console.log('Privacy rules applied:', decodedRules);
-      } catch (error) {
-        console.error('Failed to parse privacy rules:', error);
-        setPrivacyRules(null);
-      }
-    } else {
-      setPrivacyRules(null);
-    }
-  }, [searchParams]);
-
-  // Check if ID is a UUID and lookup actual credential ID
-  useEffect(() => {
-    const lookupCredentialId = async () => {
+    const parseId = async () => {
       if (!searchId) return;
 
-      // Check if it's a UUID format (contains hyphens)
-      const isUUID = searchId.includes("-");
-      setIsUUIDLookup(isUUID);
+      setLoading(true);
+      setFetchError(null);
+      setPrivacyRules(null);
 
-      if (isUUID) {
-        setLoading(true);
-        setFetchError(null);
+      try {
+        // 1. Try to decode as Base64 JSON token (new private link format)
+        // Format: Base64({ id: "123", rules: [...] })
+        let decodedId = null;
+        let decodedRules = null;
+        let isToken = false;
+
         try {
-          const result = await credentialAPI.getCredentialByUUID(searchId);
-          if (result) {
-            setActualCredentialId(result.credentialId);
-          } else {
-            setFetchError("Credential not found. Invalid verification link.");
+          // Check if it looks like a token (not a number, not a UUID)
+          if (!/^\d+$/.test(searchId) && !searchId.includes("-")) {
+            const decoded = JSON.parse(atob(searchId));
+            if (decoded && decoded.id) {
+              decodedId = decoded.id;
+              decodedRules = decoded.rules || null;
+              isToken = true;
+              console.log('Decoded private token:', { id: decodedId, rules: decodedRules });
+            }
           }
-        } catch (error) {
-          console.error("UUID lookup failed:", error);
-          setFetchError("Failed to verify credential. Please try again.");
-        } finally {
-          setLoading(false);
+        } catch (e) {
+          // Not a valid base64 token, continue to standard checks
         }
-      } else {
-        // Use as direct ID (number)
-        setActualCredentialId(parseInt(searchId));
+
+        const idToLookup = isToken ? decodedId : searchId;
+
+        // Set privacy rules if found in token
+        if (decodedRules) {
+          setPrivacyRules(decodedRules);
+        }
+
+        // 2. Check if it's a UUID format (contains hyphens)
+        const isUUID = idToLookup.toString().includes("-");
+        setIsUUIDLookup(isUUID);
+
+        if (isUUID) {
+          try {
+            const result = await credentialAPI.getCredentialByUUID(idToLookup);
+            if (result) {
+              setActualCredentialId(result.credentialId);
+            } else {
+              setFetchError("Credential not found. Invalid verification link.");
+            }
+          } catch (error) {
+            console.error("UUID lookup failed:", error);
+            setFetchError("Failed to verify credential. Please try again.");
+          }
+        } else {
+          // Use as direct ID (number)
+          setActualCredentialId(parseInt(idToLookup));
+        }
+      } catch (err) {
+        console.error("Error parsing ID:", err);
+        setFetchError("Invalid verification link.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    lookupCredentialId();
+    parseId();
   }, [searchId]);
   const {
     data: credentialData,

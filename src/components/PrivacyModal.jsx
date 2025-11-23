@@ -26,12 +26,17 @@ function PrivacyModal({ credential, onClose }) {
         let shareableUrl;
 
         if (isPrivate) {
-            // Private mode: encode selected fields
-            const rulesData = selectedFields;
-            const base64Rules = btoa(JSON.stringify(rulesData));
-            shareableUrl = `${window.location.origin}/verify/${credential.id}?rules=${base64Rules}`;
+            // Private mode: encode ID and selected fields together
+            const payload = {
+                id: credential.id,
+                rules: selectedFields
+            };
+            // Encode payload to Base64
+            const encodedPayload = btoa(JSON.stringify(payload));
+            // Use the encoded payload as the ID parameter
+            shareableUrl = `${window.location.origin}/verify/${encodedPayload}`;
         } else {
-            // Public mode: no rules parameter
+            // Public mode: standard URL
             shareableUrl = `${window.location.origin}/verify/${credential.id}`;
         }
 
