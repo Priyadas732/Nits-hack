@@ -1,14 +1,141 @@
-import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { isAddress } from 'viem';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { uploadFileToIPFS, uploadJSONToIPFS } from '../utils/pinata';
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../config/contract';
+import { useState, useEffect } from "react";
+import {
+  useAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { isAddress } from "viem";
+import abi from "../utils/abi.json";
+import { v4 as uuidv4 } from "uuid";
+import { credentialAPI } from "../services/credentialAPI";
+
+const CONTRACT_ADDRESS = "0x710ea2b142bF87FD6330d0880F93d23C496d4E48";
+const CONTRACT_ABI = abi;
 import { extractTextFromPDF } from '../utils/pdfToText';
 import { parseWithAI, hasValidData } from '../utils/aiParser';
 
 export default function IssuerForm() {
-    const [file, setFile] = useState(null);
+
+  // State for file and form data
+  const [file, setFile] = useState(null);
+  const [certType, setCertType] = useState("Degree");
+
+  // State for UUID tracking
+  const [credentialUUID, setCredentialUUID] = useState("");
+  const [showUUIDCopied, setShowUUIDCopied] = useState(false);
+
+  // ---------- IPFS upload functions (main fix is here) ----------
+
+  const getCleanJWT = () => {
+    let jwt = import.meta.env.VITE_PINATA_JWT;
+    if (!jwt) {
+      throw new Error("VITE_PINATA_JWT is missing in .env file");
+    }
+    // Remove any surrounding quotes and whitespace
+    return jwt.replace(/^['"]|['"]$/g, "").trim();
+  };
+
+  const uploadFileToIPFS = async (file) => {
+    const jwt = getCleanJWT();
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+
+      const res = await fetch(
+        "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+            // DON'T set Content-Type manually; fetch will add correct multipart boundary
+          },
+          body: data,
+        }
+      );
+
+      const resText = await res.text();
+
+      if (!res.ok) {
+        // Pinata error body is JSON; try to parse, else show raw text
+        try {
+          const errJson = JSON.parse(resText);
+          const details =
+            errJson?.error?.details ||
+            errJson?.error ||
+            JSON.stringify(errJson);
+          throw new Error(details);
+        } catch {
+          throw new Error(resText || "Unknown error from Pinata");
+        }
+      }
+
+      const resJson = JSON.parse(resText);
+      return resJson.IpfsHash;
+    } catch (error) {
+      console.error("FULL IPFS FILE ERROR:", error);
+      throw new Error(
+        `Failed to upload file to IPFS: ${
+          error.message || "Unknown error occurred"
+        }`
+      );
+    }
+  };
+
+  const uploadJSONToIPFS = async (jsonMetadata) => {
+    const jwt = getCleanJWT();
+
+    // Follow Pinata's required JSON shape
+    const body = {
+      pinataOptions: {
+        cidVersion: 1,
+      },
+      pinataMetadata: {
+        name: jsonMetadata.name || "credential-metadata.json",
+      },
+      pinataContent: jsonMetadata,
+    };
+
+    try {
+      const res = await fetch(
+        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwt}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const resText = await res.text();
+
+      if (!res.ok) {
+        try {
+          const errJson = JSON.parse(resText);
+          const details =
+            errJson?.error?.details ||
+            errJson?.error ||
+            JSON.stringify(errJson);
+          throw new Error(details);
+        } catch {
+          throw new Error(resText || "Unknown error from Pinata");
+        }
+      }
+
+      const resJson = JSON.parse(resText);
+      return resJson.IpfsHash;
+    } catch (error) {
+      console.error("FULL IPFS JSON ERROR:", error);
+      throw new Error(
+        `Failed to upload JSON to IPFS: ${
+          error.message || "Unknown error occurred"
+        }`
+      );
+    }
+  };
     const [certificateTypes, setCertificateTypes] = useState([]);
     const [selectedTypeId, setSelectedTypeId] = useState("");
     const [selectedType, setSelectedType] = useState(null);
@@ -73,12 +200,49 @@ export default function IssuerForm() {
         }));
     };
 
-    // Validate student address
-    const handleAddressChange = (e) => {
-        const address = e.target.value;
-        setStudentAddress(address);
-        setIsAddressValid(isAddress(address));
+  // Register UUID after successful minting
+  useEffect(() => {
+    const registerUUID = async () => {
+      if (isConfirmed && hash && !credentialUUID) {
+        try {
+          setStatus("Registering secure credential ID...");
+
+          // Generate UUID
+          const uuid = uuidv4();
+
+          // Get estimated credential ID (in production, parse from event logs)
+          const estimatedId = Date.now() % 1000000;
+
+          // Register with backend
+          await credentialAPI.registerCredential(
+            uuid,
+            estimatedId,
+            studentAddress,
+            hash
+          );
+
+          setCredentialUUID(uuid);
+          setStatus("");
+
+          console.log("✅ UUID Registered:", uuid);
+          console.log(`🔗 Share link: http://localhost:5173/verify/${uuid}`);
+        } catch (error) {
+          console.error("UUID registration failed:", error);
+          setStatus(
+            "Warning: Credential minted but secure ID registration failed"
+          );
+        }
+      }
     };
+
+    registerUUID();
+  }, [isConfirmed, hash, credentialUUID, studentAddress]);
+
+  const handleAddressChange = (e) => {
+    const address = e.target.value;
+    setStudentAddress(address);
+    setIsAddressValid(isAddress(address));
+  };
 
     // AI-powered PDF parsing
     const handleFileChange = async (e) => {
@@ -143,8 +307,8 @@ export default function IssuerForm() {
         }
     };
 
-    const handleUpload = async () => {
-        if (!file) return alert("Please select a file");
+  const handleUpload = async () => {
+    if (!file) return alert("Please select a file");
         if (!selectedType) return alert("Please select a certificate type");
         
         // Validate all required attributes are filled
@@ -152,17 +316,17 @@ export default function IssuerForm() {
         if (missingFields.length > 0) {
             return alert(`Please fill in all required fields: ${missingFields.map(f => f.name).join(', ')}`);
         }
-        
-        // Clear previous results
-        setFinalHash("");
-        setStatus("Uploading PDF to IPFS...");
 
-        try {
-            // STEP 1: Upload the PDF with certificate type for better organization
-            const fileHash = await uploadFileToIPFS(file, selectedType.name);
-            console.log("PDF uploaded. Hash:", fileHash);
+    // Clear previous results
+    setFinalHash("");
+    setStatus("Uploading PDF to IPFS...");
 
-            setStatus("Creating Metadata...");
+    try {
+      // STEP 1: Upload the PDF with certificate type for better organization
+      const fileHash = await uploadFileToIPFS(file, selectedType.name);
+      console.log("PDF uploaded. Hash:", fileHash);
+
+      setStatus("Creating Metadata...");
 
             // STEP 2: Construct the Metadata JSON with dynamic attributes
             const currentTimestamp = new Date().toISOString();
@@ -216,84 +380,86 @@ export default function IssuerForm() {
                 background_color: "667eea"
             };
 
-            // STEP 3: Upload the Metadata with certificate type
-            const metaHash = await uploadJSONToIPFS(metadata, selectedType.name);
-            
-            console.log("✅ Credential Created Successfully!");
+      // STEP 3: Upload the Metadata with certificate type
+      const metaHash = await uploadJSONToIPFS(metadata, selectedType.name);
+
+      console.log("✅ Credential Created Successfully!");
             console.log("PDF Hash:", fileHash);
             console.log("Metadata Hash:", metaHash);
             console.log("Full Metadata:", JSON.stringify(metadata, null, 2));
             
-            setFinalHash(metaHash);
-            setStatus("");
-        } catch (error) {
-            console.error("❌ Upload error:", error);
-            setStatus(`Error: ${error.message || 'Failed to upload credential'}`);
-            setFinalHash("");
-        }
-    };
+      setFinalHash(metaHash);
+      setStatus("");
+    } catch (error) {
+      console.error("❌ Upload error:", error);
+      setStatus(`Error: ${error.message || 'Failed to upload credential'}`);
+      setFinalHash("");
+    }
+  };
 
-    // Handle minting to blockchain
-    const handleMint = async () => {
-        if (!isConnected) {
-            alert("Please connect your wallet first!");
-            return;
-        }
+  // Handle minting to blockchain
+  const handleMint = async () => {
+    if (!isConnected) {
+      alert("Please connect your wallet first!");
+      return;
+    }
 
-        if (!isAddressValid) {
-            alert("Please enter a valid student wallet address!");
-            return;
-        }
+    if (!isAddressValid) {
+      alert("Please enter a valid student wallet address!");
+      return;
+    }
 
-        if (!finalHash) {
-            alert("Please upload the credential to IPFS first!");
-            return;
-        }
+    if (!finalHash) {
+      alert("Please upload the credential to IPFS first!");
+      return;
+    }
 
-        try {
-            writeContract({
-                address: CONTRACT_ADDRESS,
-                abi: CONTRACT_ABI,
-                functionName: 'issueCredential',
-                args: [studentAddress, finalHash],
-            });
-        } catch (error) {
-            console.error("Minting error:", error);
-        }
-    };
+    try {
+      writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: "issueCredential",
+        args: [studentAddress, finalHash],
+      });
+    } catch (error) {
+      console.error("Minting error:", error);
+    }
+  };
 
-    return (
-        <div className="issuer-form-container">
-            <div className="form-wrapper">
-                <div className="form-header">
-                    <h1 className="form-title">Issue New Credential</h1>
-                    <p className="form-subtitle">Upload and mint student credentials as blockchain NFTs</p>
-                </div>
-                
-                {/* Wallet Connection */}
-                <div className="wallet-connect-section">
-                    <ConnectButton />
-                </div>
-                
-                <div className="form-content">
-                    {/* File Input Section */}
-                    <div className="form-group">
-                        <label className="form-label">
-                            📄 Upload Credential Document (PDF)
-                        </label>
-                        <div className="file-input-wrapper">
-                            <input 
-                                type="file" 
-                                accept=".pdf"
-                                onChange={handleFileChange} 
-                                className="file-input"
-                                id="file-upload"
+  return (
+    <div className="issuer-form-container">
+      <div className="form-wrapper">
+        <div className="form-header">
+          <h1 className="form-title">Issue New Credential</h1>
+          <p className="form-subtitle">
+            Upload and mint student credentials as blockchain NFTs
+          </p>
+        </div>
+
+        {/* Wallet Connection */}
+        <div className="wallet-connect-section">
+          <ConnectButton />
+        </div>
+
+        <div className="form-content">
+          {/* File Input Section */}
+          <div className="form-group">
+            <label className="form-label">
+              📄 Upload Credential Document (PDF)
+            </label>
+            <div className="file-input-wrapper">
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="file-input"
+                id="file-upload"
                                 disabled={isAiProcessing}
-                            />
-                            <label htmlFor="file-upload" className="file-input-label">
-                                {isAiProcessing ? '✨ AI is reading...' : (file ? file.name : 'Choose a file...')}
-                            </label>
-                        </div>
+              />
+              <label htmlFor="file-upload" className="file-input-label">
+                {isAiProcessing ? '✨ AI is reading...' : (file ? file.name : "Choose a file...")}
+              </label>
+            </div>
                         {isAiProcessing && (
                             <div className="ai-loading">
                                 <div className="spinner"></div>
@@ -305,7 +471,7 @@ export default function IssuerForm() {
                                 {aiError}
                             </div>
                         )}
-                    </div>
+          </div>
 
                     {/* Type Dropdown Section */}
                     <div className="form-group">
@@ -353,112 +519,239 @@ export default function IssuerForm() {
                         </div>
                     )}
 
-                    {/* Action Button */}
-                    <button 
-                        onClick={handleUpload}
-                        className="submit-button"
-                        disabled={!file || !selectedType || certificateTypes.length === 0}
-                    >
-                        🚀 Generate Hash & Upload to IPFS
-                    </button>
+          {/* Action Button */}
+          <button
+            onClick={handleUpload}
+            className="submit-button"
+            disabled={!file || !selectedType || certificateTypes.length === 0}
+          >
+            🚀 Generate Hash & Upload to IPFS
+          </button>
 
-                    {/* Status Message */}
-                    {status && (
-                        <div className="status-message">
-                            <p>{status}</p>
-                        </div>
-                    )}
-
-                    {/* Success Output */}
-                    {finalHash && (
-                        <div className="success-box">
-                            <div className="success-icon">✅</div>
-                            <h3>Success! Credential Ready</h3>
-                            <div className="hash-display">
-                                <p className="hash-label">IPFS Metadata Hash:</p>
-                                <code className="hash-value">{finalHash}</code>
-                                <p className="hash-note">💡 Save this hash! This is what will be stored on the blockchain.</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Blockchain Minting Section */}
-                    {finalHash && (
-                        <div className="mint-section">
-                            <h3 className="mint-section-title">Mint to Blockchain</h3>
-                            
-                            {/* Student Address Input */}
-                            <div className="form-group">
-                                <label className="form-label">
-                                    👤 Student Wallet Address
-                                </label>
-                                <input
-                                    type="text"
-                                    value={studentAddress}
-                                    onChange={handleAddressChange}
-                                    placeholder="0x..."
-                                    className={`address-input ${studentAddress && (isAddressValid ? 'valid' : 'invalid')}`}
-                                />
-                                {studentAddress && !isAddressValid && (
-                                    <p className="error-text">Invalid Ethereum address format</p>
-                                )}
-                                {studentAddress && isAddressValid && (
-                                    <p className="success-text">✓ Valid address</p>
-                                )}
-                            </div>
-
-                            {/* Mint Button */}
-                            <button
-                                onClick={handleMint}
-                                disabled={!isConnected || !isAddressValid || isMintPending || isConfirming}
-                                className="mint-button"
-                            >
-                                {isMintPending ? '⏳ Waiting for Approval...' : 
-                                 isConfirming ? '⏳ Confirming Transaction...' : 
-                                 '🔗 Mint Credential to Blockchain'}
-                            </button>
-
-                            {/* Connection Warning */}
-                            {!isConnected && (
-                                <p className="warning-text">Please connect your wallet to mint credentials</p>
-                            )}
-
-                            {/* Mint Error */}
-                            {mintError && (
-                                <div className="error-box">
-                                    <p><strong>Transaction Error:</strong></p>
-                                    <p>{mintError.message || 'Failed to mint credential'}</p>
-                                </div>
-                            )}
-
-                            {/* Transaction Hash */}
-                            {hash && (
-                                <div className="transaction-box">
-                                    <p className="tx-label">Transaction Hash:</p>
-                                    <code className="tx-hash">{hash}</code>
-                                    <a
-                                        href={`https://amoy.polygonscan.com/tx/${hash}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="explorer-link"
-                                    >
-                                        View on PolygonScan →
-                                    </a>
-                                </div>
-                            )}
-
-                            {/* Success Confirmation */}
-                            {isConfirmed && (
-                                <div className="confirmed-box">
-                                    <div className="confirmed-icon">🎉</div>
-                                    <h4>Credential Minted Successfully!</h4>
-                                    <p>The credential has been permanently recorded on the Polygon Amoy blockchain.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+          {/* Status Message */}
+          {status && (
+            <div className="status-message">
+              <p>{status}</p>
             </div>
+          )}
+
+          {/* Success Output */}
+          {finalHash && (
+            <div className="success-box">
+              <div className="success-icon">✅</div>
+              <h3>Success! Credential Ready</h3>
+              <div className="hash-display">
+                <p className="hash-label">IPFS Metadata Hash:</p>
+                <code className="hash-value">{finalHash}</code>
+                <p className="hash-note">
+                  💡 Save this hash! This is what will be stored on the
+                  blockchain.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Blockchain Minting Section */}
+          {finalHash && (
+            <div className="mint-section">
+              <h3 className="mint-section-title">Mint to Blockchain</h3>
+
+              {/* Student Address Input */}
+              <div className="form-group">
+                <label className="form-label">👤 Student Wallet Address</label>
+                <input
+                  type="text"
+                  value={studentAddress}
+                  onChange={handleAddressChange}
+                  placeholder="0x..."
+                  className={`address-input ${
+                    studentAddress && (isAddressValid ? "valid" : "invalid")
+                  }`}
+                />
+                {studentAddress && !isAddressValid && (
+                  <p className="error-text">Invalid Ethereum address format</p>
+                )}
+                {studentAddress && isAddressValid && (
+                  <p className="success-text">✓ Valid address</p>
+                )}
+              </div>
+
+              {/* Mint Button */}
+              <button
+                onClick={handleMint}
+                disabled={
+                  !isConnected ||
+                  !isAddressValid ||
+                  isMintPending ||
+                  isConfirming
+                }
+                className="mint-button"
+              >
+                {isMintPending
+                  ? "⏳ Waiting for Approval..."
+                  : isConfirming
+                  ? "⏳ Confirming Transaction..."
+                  : "🔗 Mint Credential to Blockchain"}
+              </button>
+
+              {/* Connection Warning */}
+              {!isConnected && (
+                <p className="warning-text">
+                  Please connect your wallet to mint credentials
+                </p>
+              )}
+
+              {/* Mint Error */}
+              {mintError && (
+                <div className="error-box">
+                  <p>
+                    <strong>Transaction Error:</strong>
+                  </p>
+                  <p>{mintError.message || "Failed to mint credential"}</p>
+                </div>
+              )}
+
+              {/* Transaction Hash */}
+              {hash && (
+                <div className="transaction-box">
+                  <p className="tx-label">Transaction Hash:</p>
+                  <code className="tx-hash">{hash}</code>
+                  <a
+                    href={`https://amoy.polygonscan.com/tx/${hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="explorer-link"
+                  >
+                    View on PolygonScan →
+                  </a>
+                </div>
+              )}
+
+              {/* Success Confirmation */}
+              {isConfirmed && (
+                <div className="confirmed-box">
+                  <div className="confirmed-icon">🎉</div>
+                  <h4>Credential Minted Successfully!</h4>
+                  <p>
+                    The credential has been permanently recorded on the Polygon
+                    Amoy blockchain.
+                  </p>
+
+                  {/* UUID Share Link */}
+                  {credentialUUID && (
+                    <div
+                      style={{
+                        marginTop: "1.5rem",
+                        padding: "1rem",
+                        background:
+                          "linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))",
+                        borderRadius: "8px",
+                        border: "2px solid #667eea",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontWeight: "bold",
+                          color: "#667eea",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        🔗 Official Verification Link:
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          background: "white",
+                          padding: "0.75rem",
+                          borderRadius: "6px",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        <code
+                          style={{
+                            flex: 1,
+                            fontSize: "0.9rem",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {`${window.location.origin}/verify/${credentialUUID}`}
+                        </code>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `${window.location.origin}/verify/${credentialUUID}`
+                            );
+                            setShowUUIDCopied(true);
+                            setTimeout(() => setShowUUIDCopied(false), 2000);
+                          }}
+                          style={{
+                            padding: "0.5rem 1rem",
+                            background: "#667eea",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {showUUIDCopied ? "✓ Copied!" : "📋 Copy Link"}
+                        </button>
+                      </div>
+
+                      {/* Developer API Endpoint */}
+                      <div
+                        style={{
+                          marginTop: "1rem",
+                          borderTop: "1px dashed #ccc",
+                          paddingTop: "1rem",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontSize: "0.85rem",
+                            fontWeight: "bold",
+                            color: "#4a5568",
+                          }}
+                        >
+                          🛠️ API Endpoint (For Postman/Developers):
+                        </p>
+                        <code
+                          style={{
+                            display: "block",
+                            background: "#edf2f7",
+                            padding: "0.5rem",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            marginTop: "0.25rem",
+                            wordBreak: "break-all",
+                            color: "#2d3748",
+                          }}
+                        >
+                          {`http://localhost:5000/api/credentials/${credentialUUID}`}
+                        </code>
+                      </div>
+
+                      <p
+                        style={{
+                          fontSize: "0.85rem",
+                          color: "#666",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        💡 <strong>Industry Standard:</strong> Share this single
+                        link with employers or on LinkedIn. It provides instant,
+                        secure verification of the credential.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 }
