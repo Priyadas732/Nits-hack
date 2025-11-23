@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import "./App.css";
 import IssuerForm from "./pages/issuerForm.jsx";
 import Home from "./pages/Home.jsx";
@@ -24,11 +23,11 @@ function App() {
               <Link to="/register" className="nav-link">
                 Register Issuer
               </Link>
-              <Link to="/issue" className="nav-link">
-                Issue Credential
-              </Link>
               <Link to="/issuer-dashboard" className="nav-link">
                 Issuer Dashboard
+              </Link>
+              <Link to="/issue" className="nav-link">
+                Issue Credential
               </Link>
               <Link to="/verify" className="nav-link">
                 Verify Credential
@@ -36,9 +35,6 @@ function App() {
               <Link to="/types" className="nav-link">
                 Manage Types
               </Link>
-            </div>
-            <div className="wallet-widget">
-              <ConnectButton />
             </div>
           </div>
         </nav>
