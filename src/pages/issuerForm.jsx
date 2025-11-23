@@ -12,11 +12,10 @@ import { credentialAPI } from "../services/credentialAPI";
 
 const CONTRACT_ADDRESS = "0x710ea2b142bF87FD6330d0880F93d23C496d4E48";
 const CONTRACT_ABI = abi;
-import { extractTextFromPDF } from '../utils/pdfToText';
-import { parseWithAI, hasValidData } from '../utils/aiParser';
+import { extractTextFromPDF } from "../utils/pdfToText";
+import { parseWithAI, hasValidData } from "../utils/aiParser";
 
 export default function IssuerForm() {
-
   // State for file and form data
   const [file, setFile] = useState(null);
   const [certType, setCertType] = useState("Degree");
@@ -136,186 +135,246 @@ export default function IssuerForm() {
       );
     }
   };
-    const [certificateTypes, setCertificateTypes] = useState([]);
-    const [selectedTypeId, setSelectedTypeId] = useState("");
-    const [selectedType, setSelectedType] = useState(null);
-    const [attributeValues, setAttributeValues] = useState({});
-    const [status, setStatus] = useState("");
-    const [finalHash, setFinalHash] = useState("");
-    const [studentAddress, setStudentAddress] = useState("");
-    const [isAddressValid, setIsAddressValid] = useState(false);
-    const [isAiProcessing, setIsAiProcessing] = useState(false);
-    const [aiError, setAiError] = useState("");
-    
-    // Wagmi hooks
-    const { address: connectedAddress, isConnected } = useAccount();
-    const { data: hash, writeContract, isPending: isMintPending, error: mintError } = useWriteContract();
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-        hash,
-    });
+  const [certificateTypes, setCertificateTypes] = useState([]);
+  const [selectedTypeId, setSelectedTypeId] = useState("");
+  const [selectedType, setSelectedType] = useState(null);
+  const [attributeValues, setAttributeValues] = useState({});
+  const [status, setStatus] = useState("");
+  const [finalHash, setFinalHash] = useState("");
+  const [studentAddress, setStudentAddress] = useState("");
+  const [isAddressValid, setIsAddressValid] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiError, setAiError] = useState("");
 
-    // Load certificate types from localStorage
-    useEffect(() => {
-        const savedTypes = localStorage.getItem('certTemplates');
-        if (savedTypes) {
-            const types = JSON.parse(savedTypes);
-            setCertificateTypes(types);
-            // Set first type as default if available
-            if (types.length > 0) {
-                setSelectedTypeId(types[0].id.toString());
-                setSelectedType(types[0]);
-                // Initialize attribute values
-                const initialValues = {};
-                types[0].fields.forEach(field => {
-                    initialValues[field.name] = '';
-                });
-                setAttributeValues(initialValues);
-            }
-        }
-    }, []);
+  // Wagmi hooks
+  const { address: connectedAddress, isConnected } = useAccount();
+  const {
+    data: hash,
+    writeContract,
+    isPending: isMintPending,
+    error: mintError,
+  } = useWriteContract();
+  const {
+    data: receipt,
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+  } = useWaitForTransactionReceipt({
+    hash,
+  });
 
-    // Handle certificate type selection
-    const handleTypeChange = (e) => {
-        const typeId = e.target.value;
-        setSelectedTypeId(typeId);
-        
-        const type = certificateTypes.find(t => t.id.toString() === typeId);
-        setSelectedType(type);
-        
-        // Reset attribute values for new type
-        if (type) {
-            const initialValues = {};
-            type.fields.forEach(field => {
-                initialValues[field.name] = '';
-            });
-            setAttributeValues(initialValues);
-        }
-    };
+  // Load certificate types from localStorage
+  useEffect(() => {
+    const savedTypes = localStorage.getItem("certTemplates");
+    if (savedTypes) {
+      const types = JSON.parse(savedTypes);
+      setCertificateTypes(types);
+      // Set first type as default if available
+      if (types.length > 0) {
+        setSelectedTypeId(types[0].id.toString());
+        setSelectedType(types[0]);
+        // Initialize attribute values
+        const initialValues = {};
+        types[0].fields.forEach((field) => {
+          initialValues[field.name] = "";
+        });
+        setAttributeValues(initialValues);
+      }
+    }
+  }, []);
 
-    // Handle attribute value change
-    const handleAttributeChange = (fieldName, value) => {
-        setAttributeValues(prev => ({
-            ...prev,
-            [fieldName]: value
-        }));
-    };
+  // Handle certificate type selection
+  const handleTypeChange = (e) => {
+    const typeId = e.target.value;
+    setSelectedTypeId(typeId);
+
+    const type = certificateTypes.find((t) => t.id.toString() === typeId);
+    setSelectedType(type);
+
+    // Reset attribute values for new type
+    if (type) {
+      const initialValues = {};
+      type.fields.forEach((field) => {
+        initialValues[field.name] = "";
+      });
+      setAttributeValues(initialValues);
+    }
+  };
+
+  // Handle attribute value change
+  const handleAttributeChange = (fieldName, value) => {
+    setAttributeValues((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
+  };
 
   // Register UUID after successful minting
   useEffect(() => {
     const registerUUID = async () => {
-      if (isConfirmed && hash && !credentialUUID) {
+      if (isConfirmed && receipt && !credentialUUID) {
         try {
+          console.log("🔄 Starting UUID registration process...");
+          console.log("Transaction hash:", hash);
+
           setStatus("Registering secure credential ID...");
 
           // Generate UUID
           const uuid = uuidv4();
+          console.log("📝 Generated UUID:", uuid);
 
-          // Get estimated credential ID (in production, parse from event logs)
-          const estimatedId = Date.now() % 1000000;
+          // Get actual credential ID from transaction logs
+          let credentialId;
+          try {
+            // Find the CredentialIssued event log
+            // Event signature: CredentialIssued(uint256 indexed id, address indexed student, address issuer)
+            // We look for a log that has 3 topics (sig, id, student)
+            const log = receipt.logs.find((l) => l.topics.length >= 3);
+            if (log) {
+              // The ID is in topic 1 (hex string)
+              credentialId = BigInt(log.topics[1]).toString();
+              console.log(
+                "🔢 Found actual credential ID from logs:",
+                credentialId
+              );
+            } else {
+              throw new Error("Could not find CredentialIssued event in logs");
+            }
+          } catch (parseError) {
+            console.error("Error parsing logs:", parseError);
+            // Fallback to estimation if parsing fails (should not happen if contract works)
+            credentialId = (Date.now() % 1000000).toString();
+            console.warn("⚠️ Using fallback ID:", credentialId);
+          }
 
           // Register with backend
-          await credentialAPI.registerCredential(
+          console.log("📤 Sending registration to backend...");
+          const response = await credentialAPI.registerCredential(
             uuid,
-            estimatedId,
+            credentialId,
             studentAddress,
             hash
           );
+          console.log("✅ Backend response:", response);
 
           setCredentialUUID(uuid);
           setStatus("");
 
-          console.log("✅ UUID Registered:", uuid);
-          console.log(`🔗 Share link: http://localhost:5173/verify/${uuid}`);
+          console.log("✅ UUID Registered Successfully!");
+          console.log(
+            `🔗 Share link: ${window.location.origin}/verify/${uuid}`
+          );
         } catch (error) {
-          console.error("UUID registration failed:", error);
+          console.error("❌ UUID registration failed:", error);
+          console.error(
+            "Error details:",
+            error.response?.data || error.message
+          );
           setStatus(
             "Warning: Credential minted but secure ID registration failed"
           );
+          // Still set the UUID even if backend registration fails
+          // so the link can be shown
+          const uuid = uuidv4();
+          setCredentialUUID(uuid);
+          console.log("⚠️ Set UUID locally despite backend failure:", uuid);
         }
       }
     };
 
     registerUUID();
-  }, [isConfirmed, hash, credentialUUID, studentAddress]);
+  }, [isConfirmed, receipt, hash, credentialUUID, studentAddress]);
 
-  const handleAddressChange = (e) => {
-    const address = e.target.value;
-    setStudentAddress(address);
-    setIsAddressValid(isAddress(address));
+  // AI-powered PDF parsing
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    // Validate file type
+    if (selectedFile.type !== "application/pdf") {
+      alert("Please select a PDF file");
+      return;
+    }
+
+    setFile(selectedFile);
+    setAiError("");
+
+    // Only run AI if we have a selected certificate type with fields
+    if (selectedType && selectedType.fields && selectedType.fields.length > 0) {
+      setIsAiProcessing(true);
+      setStatus("✨ AI is reading the document...");
+
+      try {
+        // Step 1: Extract text from PDF
+        const extractedText = await extractTextFromPDF(selectedFile);
+
+        if (!extractedText || extractedText.length < 10) {
+          throw new Error("Could not extract meaningful text from PDF");
+        }
+
+        // Step 2: Parse with AI
+        const parsedData = await parseWithAI(
+          extractedText,
+          selectedType.fields
+        );
+
+        // Step 3: Auto-fill the form
+        const newAttributeValues = {};
+        selectedType.fields.forEach((field) => {
+          // Use AI value if available, otherwise keep empty
+          newAttributeValues[field.name] = parsedData[field.name] || "";
+        });
+
+        setAttributeValues(newAttributeValues);
+
+        // Check if AI found any data
+        if (hasValidData(parsedData)) {
+          setStatus(
+            "✅ AI successfully pre-filled the form! Please review and edit if needed."
+          );
+        } else {
+          setStatus(
+            "⚠️ AI could not extract data. Please fill the form manually."
+          );
+        }
+      } catch (error) {
+        console.error("AI parsing error:", error);
+        setAiError(`AI parsing failed: ${error.message}`);
+        setStatus("⚠️ AI parsing failed. Please fill the form manually.");
+
+        // Initialize empty values so user can fill manually
+        const emptyValues = {};
+        selectedType.fields.forEach((field) => {
+          emptyValues[field.name] = "";
+        });
+        setAttributeValues(emptyValues);
+      } finally {
+        setIsAiProcessing(false);
+      }
+    }
   };
-
-    // AI-powered PDF parsing
-    const handleFileChange = async (e) => {
-        const selectedFile = e.target.files[0];
-        if (!selectedFile) return;
-
-        // Validate file type
-        if (selectedFile.type !== 'application/pdf') {
-            alert('Please select a PDF file');
-            return;
-        }
-
-        setFile(selectedFile);
-        setAiError("");
-        
-        // Only run AI if we have a selected certificate type with fields
-        if (selectedType && selectedType.fields && selectedType.fields.length > 0) {
-            setIsAiProcessing(true);
-            setStatus("✨ AI is reading the document...");
-            
-            try {
-                // Step 1: Extract text from PDF
-                const extractedText = await extractTextFromPDF(selectedFile);
-                
-                if (!extractedText || extractedText.length < 10) {
-                    throw new Error("Could not extract meaningful text from PDF");
-                }
-
-                // Step 2: Parse with AI
-                const parsedData = await parseWithAI(extractedText, selectedType.fields);
-                
-                // Step 3: Auto-fill the form
-                const newAttributeValues = {};
-                selectedType.fields.forEach(field => {
-                    // Use AI value if available, otherwise keep empty
-                    newAttributeValues[field.name] = parsedData[field.name] || '';
-                });
-                
-                setAttributeValues(newAttributeValues);
-                
-                // Check if AI found any data
-                if (hasValidData(parsedData)) {
-                    setStatus("✅ AI successfully pre-filled the form! Please review and edit if needed.");
-                } else {
-                    setStatus("⚠️ AI could not extract data. Please fill the form manually.");
-                }
-                
-            } catch (error) {
-                console.error('AI parsing error:', error);
-                setAiError(`AI parsing failed: ${error.message}`);
-                setStatus("⚠️ AI parsing failed. Please fill the form manually.");
-                
-                // Initialize empty values so user can fill manually
-                const emptyValues = {};
-                selectedType.fields.forEach(field => {
-                    emptyValues[field.name] = '';
-                });
-                setAttributeValues(emptyValues);
-            } finally {
-                setIsAiProcessing(false);
-            }
-        }
-    };
 
   const handleUpload = async () => {
     if (!file) return alert("Please select a file");
-        if (!selectedType) return alert("Please select a certificate type");
-        
-        // Validate all required attributes are filled
-        const missingFields = selectedType.fields.filter(field => !attributeValues[field.name]?.trim());
-        if (missingFields.length > 0) {
-            return alert(`Please fill in all required fields: ${missingFields.map(f => f.name).join(', ')}`);
-        }
+    if (!selectedType) return alert("Please select a certificate type");
+
+    // Validate all required attributes are filled
+    const missingFields = selectedType.fields.filter((field) => {
+      const value = attributeValues[field.name];
+      // Handle different field types
+      if (field.type === "text") {
+        return !value || !value.trim();
+      } else {
+        // For number, date, etc., just check if value exists
+        return !value && value !== 0; // Allow 0 for numbers
+      }
+    });
+    if (missingFields.length > 0) {
+      return alert(
+        `Please fill in all required fields: ${missingFields
+          .map((f) => f.name)
+          .join(", ")}`
+      );
+    }
 
     // Clear previous results
     setFinalHash("");
@@ -328,71 +387,75 @@ export default function IssuerForm() {
 
       setStatus("Creating Metadata...");
 
-            // STEP 2: Construct the Metadata JSON with dynamic attributes
-            const currentTimestamp = new Date().toISOString();
-            const attributes = [
-                { trait_type: "Certificate Type", value: selectedType.name },
-                { trait_type: "Issue Date", value: currentTimestamp, display_type: "date" }
-            ];
-            
-            // Add all custom attributes from the certificate type
-            selectedType.fields.forEach(field => {
-                const value = attributeValues[field.name];
-                const attribute = {
-                    trait_type: field.name,
-                    value: value
-                };
-                
-                // Add display_type for special field types (NFT standard)
-                if (field.type === 'number') {
-                    attribute.display_type = 'number';
-                } else if (field.type === 'date') {
-                    attribute.display_type = 'date';
-                }
-                
-                attributes.push(attribute);
-            });
+      // STEP 2: Construct the Metadata JSON with dynamic attributes
+      const currentTimestamp = new Date().toISOString();
+      const attributes = [
+        { trait_type: "Certificate Type", value: selectedType.name },
+        {
+          trait_type: "Issue Date",
+          value: currentTimestamp,
+          display_type: "date",
+        },
+      ];
 
-            // Enhanced metadata following NFT and OpenSea standards
-            const metadata = {
-                name: `${selectedType.name} - Student Credential`,
-                description: `A ${selectedType.name} credential issued on the blockchain platform. This digital credential is verifiable, immutable, and permanently stored on IPFS and Polygon blockchain.`,
-                certificateType: selectedType.name,
-                
-                // Standard NFT fields
-                image: `ipfs://${fileHash}`, // Points to the PDF document
-                external_url: `https://ipfs.io/ipfs/${fileHash}`, // Direct link to view PDF
-                
-                // All credential attributes
-                attributes: attributes,
-                
-                // Additional metadata for verification
-                metadata: {
-                    version: "1.0",
-                    standard: "ERC721",
-                    createdAt: currentTimestamp,
-                    platform: "Student Credentials Platform",
-                    documentHash: fileHash,
-                    documentType: "application/pdf"
-                },
-                
-                // Background color for NFT marketplaces (optional)
-                background_color: "667eea"
-            };
+      // Add all custom attributes from the certificate type
+      selectedType.fields.forEach((field) => {
+        const value = attributeValues[field.name];
+        const attribute = {
+          trait_type: field.name,
+          value: value,
+        };
+
+        // Add display_type for special field types (NFT standard)
+        if (field.type === "number") {
+          attribute.display_type = "number";
+        } else if (field.type === "date") {
+          attribute.display_type = "date";
+        }
+
+        attributes.push(attribute);
+      });
+
+      // Enhanced metadata following NFT and OpenSea standards
+      const metadata = {
+        name: `${selectedType.name} - Student Credential`,
+        description: `A ${selectedType.name} credential issued on the blockchain platform. This digital credential is verifiable, immutable, and permanently stored on IPFS and Polygon blockchain.`,
+        certificateType: selectedType.name,
+
+        // Standard NFT fields
+        image: `ipfs://${fileHash}`, // Points to the PDF document
+        external_url: `https://ipfs.io/ipfs/${fileHash}`, // Direct link to view PDF
+
+        // All credential attributes
+        attributes: attributes,
+
+        // Additional metadata for verification
+        metadata: {
+          version: "1.0",
+          standard: "ERC721",
+          createdAt: currentTimestamp,
+          platform: "Student Credentials Platform",
+          documentHash: fileHash,
+          documentType: "application/pdf",
+        },
+
+        // Background color for NFT marketplaces (optional)
+        background_color: "667eea",
+      };
 
       // STEP 3: Upload the Metadata with certificate type
       const metaHash = await uploadJSONToIPFS(metadata, selectedType.name);
 
       console.log("✅ Credential Created Successfully!");
-            console.log("PDF Hash:", fileHash);
-            console.log("Metadata Hash:", metaHash);
-            console.log("Full Metadata:", JSON.stringify(metadata, null, 2));
-            
+      console.log("PDF Hash:", fileHash);
+      console.log("Metadata Hash:", metaHash);
+      console.log("Full Metadata:", JSON.stringify(metadata, null, 2));
+
       setFinalHash(metaHash);
       setStatus("");
     } catch (error) {
       console.error("❌ Upload error:", error);
-      setStatus(`Error: ${error.message || 'Failed to upload credential'}`);
+      setStatus(`Error: ${error.message || "Failed to upload credential"}`);
       setFinalHash("");
     }
   };
@@ -454,70 +517,69 @@ export default function IssuerForm() {
                 onChange={handleFileChange}
                 className="file-input"
                 id="file-upload"
-                                disabled={isAiProcessing}
+                disabled={isAiProcessing}
               />
               <label htmlFor="file-upload" className="file-input-label">
-                {isAiProcessing ? '✨ AI is reading...' : (file ? file.name : "Choose a file...")}
+                {isAiProcessing
+                  ? "✨ AI is reading..."
+                  : file
+                  ? file.name
+                  : "Choose a file..."}
               </label>
             </div>
-                        {isAiProcessing && (
-                            <div className="ai-loading">
-                                <div className="spinner"></div>
-                                <span>AI is analyzing your document...</span>
-                            </div>
-                        )}
-                        {aiError && (
-                            <div className="ai-error">
-                                {aiError}
-                            </div>
-                        )}
+            {isAiProcessing && (
+              <div className="ai-loading">
+                <div className="spinner"></div>
+                <span>AI is analyzing your document...</span>
+              </div>
+            )}
+            {aiError && <div className="ai-error">{aiError}</div>}
           </div>
 
-                    {/* Type Dropdown Section */}
-                    <div className="form-group">
-                        <label className="form-label">
-                            🎓 Credential Type
-                        </label>
-                        {certificateTypes.length > 0 ? (
-                            <select 
-                                onChange={handleTypeChange}
-                                className="form-select"
-                                value={selectedTypeId}
-                            >
-                                {certificateTypes.map(type => (
-                                    <option key={type.id} value={type.id}>
-                                        {type.name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            <p className="warning-text">
-                                No certificate types available. Please create one in the "Manage Types" page.
-                            </p>
-                        )}
-                    </div>
+          {/* Type Dropdown Section */}
+          <div className="form-group">
+            <label className="form-label">🎓 Credential Type</label>
+            {certificateTypes.length > 0 ? (
+              <select
+                onChange={handleTypeChange}
+                className="form-select"
+                value={selectedTypeId}
+              >
+                {certificateTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="warning-text">
+                No certificate types available. Please create one in the "Manage
+                Types" page.
+              </p>
+            )}
+          </div>
 
-                    {/* Dynamic Attribute Fields */}
-                    {selectedType && selectedType.fields.length > 0 && (
-                        <div className="attributes-section">
-                            <h3 className="section-title">Certificate Details</h3>
-                            {selectedType.fields.map((field, index) => (
-                                <div key={index} className="form-group">
-                                    <label className="form-label">
-                                        {field.name}
-                                    </label>
-                                    <input 
-                                        type={field.type}
-                                        value={attributeValues[field.name] || ''}
-                                        onChange={(e) => handleAttributeChange(field.name, e.target.value)}
-                                        placeholder={`Enter ${field.name}`}
-                                        className="text-input"
-                                        required
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    )}
+          {/* Dynamic Attribute Fields */}
+          {selectedType && selectedType.fields.length > 0 && (
+            <div className="attributes-section">
+              <h3 className="section-title">Certificate Details</h3>
+              {selectedType.fields.map((field, index) => (
+                <div key={index} className="form-group">
+                  <label className="form-label">{field.name}</label>
+                  <input
+                    type={field.type}
+                    value={attributeValues[field.name] || ""}
+                    onChange={(e) =>
+                      handleAttributeChange(field.name, e.target.value)
+                    }
+                    placeholder={`Enter ${field.name}`}
+                    className="text-input"
+                    required
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Action Button */}
           <button
