@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { readContract } from 'wagmi/actions';
 import { config } from '../config/wagmi';
 import { fetchMetadata } from '../utils/ipfsHelper';
@@ -17,12 +17,21 @@ function IssuerDashboard() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [totalIssued, setTotalIssued] = useState(0);
+    const [revokingId, setRevokingId] = useState(null);
 
     // Read the total credential count
     const { data: credentialCount } = useReadContract({
         address: CREDENTIAL_REGISTRY_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'credentialCount',
+    });
+
+    // Contract write hook for revoking credentials
+    const { data: revokeHash, writeContract: revokeCredential } = useWriteContract();
+
+    // Wait for revoke transaction receipt
+    const { isLoading: isRevoking, isSuccess: revokeSuccess } = useWaitForTransactionReceipt({
+        hash: revokeHash,
     });
 
     // Fetch credentials when wallet connects or count changes
@@ -35,6 +44,14 @@ function IssuerDashboard() {
 
         fetchIssuedCredentials();
     }, [isConnected, address, credentialCount]);
+
+    // Refresh credentials after successful revocation
+    useEffect(() => {
+        if (revokeSuccess) {
+            setRevokingId(null);
+            fetchIssuedCredentials();
+        }
+    }, [revokeSuccess]);
 
     const fetchIssuedCredentials = async () => {
         setLoading(true);
@@ -112,6 +129,21 @@ function IssuerDashboard() {
             setError('Failed to load credentials. Please try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRevoke = async (credentialId) => {
+        try {
+            setRevokingId(credentialId);
+            revokeCredential({
+                address: CREDENTIAL_REGISTRY_ADDRESS,
+                abi: CONTRACT_ABI,
+                functionName: 'revokeCredential',
+                args: [BigInt(credentialId)],
+            });
+        } catch (err) {
+            console.error('Error revoking credential:', err);
+            setRevokingId(null);
         }
     };
 
@@ -198,6 +230,15 @@ function IssuerDashboard() {
                                                 <Link to={`/verify/${cred.id}`} className="view-btn">
                                                     View Details →
                                                 </Link>
+                                                {cred.isValid && (
+                                                    <button
+                                                        className="revoke-btn"
+                                                        onClick={() => handleRevoke(cred.id)}
+                                                        disabled={isRevoking && revokingId === cred.id}
+                                                    >
+                                                        {isRevoking && revokingId === cred.id ? 'Revoking...' : 'Revoke'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
